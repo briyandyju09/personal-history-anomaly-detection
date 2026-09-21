@@ -231,6 +231,9 @@ def main():
         D["e8_corr"] = e8_corr.round(4).to_dict("records")
 
     # ---- Dataset facts (Explore the Data / Dataset section) ----
+    # All aggregate/binned only -- no individual account's transaction
+    # sequence is exposed here (interactive.txt: "Do not expose sensitive
+    # information").
     acc = read_csv(f"{RAW}/account_summary.csv")
     if acc is not None:
         n = acc["n_transactions"]
@@ -248,6 +251,38 @@ def main():
             "ge250": int((n >= 250).sum()),
             "ge500": int((n >= 500).sum()),
         }
+
+    trans_path = "data/raw/trans.csv"
+    if os.path.exists(trans_path):
+        tdf = pd.read_csv(trans_path, sep=";", low_memory=False)
+        amt = pd.to_numeric(tdf["amount"], errors="coerce").dropna()
+        amt = amt[amt > 0]
+        ahist, aedges = np.histogram(np.log10(amt), bins=24)
+        D["dataset_amount_hist"] = {
+            "edges": [round(float(10**e), 1) for e in aedges],
+            "counts": [int(x) for x in ahist],
+        }
+
+        op = tdf["operation"].fillna("(missing)").value_counts()
+        D["dataset_operation_freq"] = {
+            "labels": [str(x) for x in op.index[:8]],
+            "counts": [int(x) for x in op.values[:8]],
+        }
+
+        ks = tdf["k_symbol"].fillna("(missing)").value_counts()
+        D["dataset_ksymbol_freq"] = {
+            "labels": [str(x) for x in ks.index[:8]],
+            "counts": [int(x) for x in ks.values[:8]],
+        }
+
+        dow = pd.to_datetime(
+            tdf["date"].astype(str).str.zfill(6), format="%y%m%d"
+        ).dt.dayofweek.value_counts().sort_index()
+        D["dataset_dow_freq"] = {
+            "labels": ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"],
+            "counts": [int(dow.get(i, 0)) for i in range(7)],
+        }
+        del tdf
 
     meta = read_csv(f"{RAW}/e1_e2_meta.json") if False else None
     meta_path = f"{RAW}/e1_e2_meta.json"

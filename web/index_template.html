@@ -194,8 +194,10 @@ demos near the end, which are clearly-labelled constructed teaching examples, no
 reliably learn what "normal spending" looks like for one person — and does that number even exist,
 or does it depend on the person?</div>
 <p>A personalised anomaly detector compares each transaction against a model of one person's own
-past. At the moment an account opens there is no past. Somewhere between zero transactions and a
-lifetime of them, the personal baseline becomes worth using.</p>
+past. Per-user behavioural profiling for card fraud is a mature idea in the literature (e.g.
+<span class="cite" data-cite="dalpozzolo">Dal Pozzolo et al., 2018</span>), and appears in deployed
+systems too. At the moment an account opens there is no past. Somewhere between zero transactions
+and a lifetime of them, the personal baseline becomes worth using.</p>
 <p>Production systems handle this with a cutoff. One patent family describes filtering out
 "unseasoned users, i.e. users with insufficient history." The cutoff is treated as a known
 engineering parameter. We could not find published work measuring it.</p>
@@ -285,6 +287,27 @@ spending habits, it helps to see what "normal" looks like in bulk — how many p
 typically make, and how skewed that is (a few people transact constantly, most transact modestly).</div>
 <div class="panel">
   <div class="grid" id="dsFacts"></div>
+</div>
+<div class="panel">
+  <h3 style="margin-top:0">Transaction amounts</h3>
+  <div class="chart"><svg id="chartAmount" viewBox="0 0 760 260" role="img"
+   aria-label="Transaction amount distribution"></svg></div>
+  <p class="cap">All 1,056,320 transactions, log-scaled bins.</p>
+</div>
+<div class="panel">
+  <h3 style="margin-top:0">Operation type frequency</h3>
+  <div class="chart"><svg id="chartOp" viewBox="0 0 760 260" role="img"
+   aria-label="Operation type frequency"></svg></div>
+</div>
+<div class="panel">
+  <h3 style="margin-top:0">k_symbol (transaction characterisation) frequency</h3>
+  <div class="chart"><svg id="chartKs" viewBox="0 0 760 260" role="img"
+   aria-label="k_symbol frequency"></svg></div>
+</div>
+<div class="panel">
+  <h3 style="margin-top:0">Day-of-week pattern</h3>
+  <div class="chart"><svg id="chartDow" viewBox="0 0 760 260" role="img"
+   aria-label="Day of week frequency"></svg></div>
 </div>
 <p class="cap">Only aggregate, non-identifying distributions are shown — no individual account's
 transaction sequence is displayed on this page outside the clearly-labelled synthetic demos below.</p>
@@ -854,6 +877,34 @@ function barChart(svgId, edges, counts, opts){
   svg.innerHTML=o;
 }
 
+function catBarChart(svgId, labels, counts, opts){
+  opts=opts||{};
+  const svg=document.getElementById(svgId);
+  const W=760,H=+svg.getAttribute('viewBox').split(' ')[3];
+  const M={t:12,r:18,b:70,l:44};
+  const iw=W-M.l-M.r, ih=H-M.t-M.b;
+  const maxC=Math.max(...counts);
+  const n=counts.length;
+  const bw=iw/n;
+  const muted=cs('--muted'), line=cs('--line'), accent=cs('--accent');
+  let o='';
+  const steps=4;
+  for(let i=0;i<=steps;i++){
+    const yy=M.t+ih-ih*i/steps;
+    o+=`<line x1="${M.l}" y1="${yy}" x2="${W-M.r}" y2="${yy}" stroke="${line}" stroke-width="1"/>`;
+    o+=`<text x="${M.l-8}" y="${yy+4}" fill="${muted}" font-size="10" text-anchor="end" font-family="monospace">${Math.round(maxC*i/steps)}</text>`;
+  }
+  counts.forEach((c,i)=>{
+    const h=ih*c/maxC;
+    o+=`<rect x="${M.l+i*bw+bw*0.1}" y="${M.t+ih-h}" width="${bw*0.8}" height="${h}" fill="${accent}" opacity="0.85"/>`;
+  });
+  labels.forEach((lab,i)=>{
+    const x=M.l+i*bw+bw/2, y=H-M.b+14;
+    o+=`<text x="0" y="0" fill="${muted}" font-size="10" text-anchor="end" font-family="monospace" transform="translate(${x},${y}) rotate(-40)">${lab.length>16?lab.slice(0,15)+'…':lab}</text>`;
+  });
+  svg.innerHTML=o;
+}
+
 function table(id, cols, rows, fmt){
   const el=document.getElementById(id);
   if(!el) return;
@@ -874,6 +925,19 @@ if(D.dataset_facts){
 }
 if(D.dataset_depth_hist){
   barChart('chartDepth', D.dataset_depth_hist.edges, D.dataset_depth_hist.counts, {});
+}
+if(D.dataset_amount_hist){
+  barChart('chartAmount', D.dataset_amount_hist.edges, D.dataset_amount_hist.counts,
+   {xlab:'transaction amount'});
+}
+if(D.dataset_operation_freq){
+  catBarChart('chartOp', D.dataset_operation_freq.labels, D.dataset_operation_freq.counts, {});
+}
+if(D.dataset_ksymbol_freq){
+  catBarChart('chartKs', D.dataset_ksymbol_freq.labels, D.dataset_ksymbol_freq.counts, {});
+}
+if(D.dataset_dow_freq){
+  catBarChart('chartDow', D.dataset_dow_freq.labels, D.dataset_dow_freq.counts, {});
 }
 
 /* ---- chart 1: data efficiency, with metric toggle ---- */

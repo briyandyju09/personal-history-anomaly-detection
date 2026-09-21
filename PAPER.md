@@ -36,6 +36,10 @@ We could not find published work measuring it. That is the gap this paper addres
 
 5. **A negative result** on whether observed behavioural complexity predicts an individual's data requirement in real data, contrasted with a strong positive result under controlled manipulation.
 
+6. **A second, structurally different dataset used to interrogate, not just confirm, the real-data findings.** Card-structured, synthetic, with merchant/category/geography channels the real dataset lacks (§5.4, §7.10). It surfaced a genuine contradiction (Isolation Forest's relative ranking reverses) rather than a clean replication, which we treat as itself informative about how far the Berka-specific conclusions generalise.
+
+7. **A demonstration that the paper's own untested interpretations get tested, not left standing.** An interpretation offered for a puzzling result in an earlier version of this paper (behavioural drift explaining a negative marginal-gain step, §7.6) was converted into a direct measurement (§6.8, E6) and did not survive it. We report the retraction rather than the more comfortable original story.
+
 ### 1.2 What this paper is not
 
 It is not a fraud detection study. It is not a proposal for a new detector. It is not evidence that any of this would work in production, on modern card data, or against an adversary who is trying to imitate the account holder.
