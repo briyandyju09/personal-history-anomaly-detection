@@ -1,0 +1,27 @@
+  archetype regular done
+  archetype moderate done
+  archetype variable done
+  archetype traveller done
+  archetype seasonal done
+  archetype burst done
+
+=== B1 personal PR-AUC by archetype and history size (mahalanobis) ===
+archetype     burst  moderate  regular  seasonal  traveller  variable
+history_size                                                         
+1             0.240     0.351    0.400     0.330      0.260     0.343
+5             0.277     0.305    0.389     0.247      0.219     0.216
+10            0.308     0.336    0.668     0.337      0.230     0.243
+25            0.472     0.505    0.833     0.427      0.324     0.328
+50            0.592     0.648    0.895     0.559      0.449     0.443
+100           0.750     0.779    0.925     0.644      0.572     0.544
+250           0.908     0.908    0.939     0.840      0.823     0.736
+500           0.927     0.929    0.936     0.923      0.928     0.900
+
+=== B3 per-archetype relative-90 threshold (mahalanobis) ===
+archetype  threshold  best
+    burst      250.0 0.927
+ moderate      250.0 0.929
+  regular       50.0 0.939
+ seasonal      250.0 0.923
+traveller      500.0 0.928
+ variable      500.0 0.900

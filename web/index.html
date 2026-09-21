@@ -1,0 +1,597 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>How Much Personal History Is Enough?</title>
+<style>
+:root{
+  box-sizing:border-box;
+  padding-top:env(safe-area-inset-top,0px);
+  padding-bottom:env(safe-area-inset-bottom,0px);
+  --bg:#fbfaf8; --panel:#ffffff; --ink:#16181d; --muted:#5d636e;
+  --line:#e3e0da; --accent:#1b4965; --accent2:#c1666b; --accent3:#2a9d8f;
+  --warn:#b0480f; --code:#f3f1ec;
+}
+:root:not([data-theme="light"]){}
+@media (prefers-color-scheme:dark){
+ :root:not([data-theme="light"]){
+  --bg:#14161a; --panel:#1c1f25; --ink:#eceff3; --muted:#a2a9b4;
+  --line:#2c3138; --accent:#7fb3d5; --accent2:#e08b90; --accent3:#4fc3ae;
+  --warn:#e8935c; --code:#22262c;
+ }
+}
+:root[data-theme="dark"]{
+  --bg:#14161a; --panel:#1c1f25; --ink:#eceff3; --muted:#a2a9b4;
+  --line:#2c3138; --accent:#7fb3d5; --accent2:#e08b90; --accent3:#4fc3ae;
+  --warn:#e8935c; --code:#22262c;
+}
+*,*::before,*::after{box-sizing:inherit}
+html{scroll-padding-top:env(safe-area-inset-top,0px);-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--bg);color:var(--ink);
+ font-family:"Iowan Old Style","Palatino Linotype",Palatino,Georgia,serif;
+ font-size:17px;line-height:1.62}
+.wrap{max-width:860px;margin:0 auto;padding:0 20px 80px}
+header{padding:56px 0 28px;border-bottom:1px solid var(--line)}
+.kicker{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:11px;
+ letter-spacing:.16em;text-transform:uppercase;color:var(--muted)}
+h1{font-size:clamp(28px,5.2vw,44px);line-height:1.14;margin:14px 0 10px;font-weight:600}
+.sub{color:var(--muted);font-size:18px;margin:0}
+h2{font-size:26px;margin:52px 0 14px;font-weight:600;line-height:1.25}
+h3{font-size:19px;margin:32px 0 8px;font-weight:600}
+p{margin:0 0 14px}
+a{color:var(--accent)}
+.badge{display:inline-block;background:var(--code);border:1px solid var(--line);
+ color:var(--muted);font-family:ui-monospace,monospace;font-size:11px;
+ padding:4px 9px;border-radius:99px;margin:14px 6px 0 0}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:12px;
+ padding:20px;margin:24px 0}
+.note{border-left:3px solid var(--warn);background:var(--panel);padding:14px 18px;
+ margin:22px 0;border-radius:0 8px 8px 0}
+.note strong{color:var(--warn)}
+.ctrls{display:flex;flex-wrap:wrap;gap:7px;margin:0 0 14px}
+button.t{font-family:ui-monospace,monospace;font-size:12px;padding:6px 11px;
+ border:1px solid var(--line);background:transparent;color:var(--muted);
+ border-radius:99px;cursor:pointer;transition:.15s}
+button.t:hover{border-color:var(--accent)}
+button.t.on{background:var(--accent);border-color:var(--accent);color:var(--bg)}
+.chart{width:100%;overflow-x:auto}
+svg{display:block;max-width:100%;height:auto}
+.tblwrap{overflow-x:auto;margin:16px 0}
+table{border-collapse:collapse;width:100%;font-size:14px;
+ font-family:ui-monospace,SFMono-Regular,Menlo,monospace}
+th,td{padding:7px 10px;text-align:right;border-bottom:1px solid var(--line);
+ white-space:nowrap}
+th:first-child,td:first-child{text-align:left}
+thead th{color:var(--muted);font-weight:500;font-size:11px;
+ text-transform:uppercase;letter-spacing:.07em}
+tbody tr:hover{background:var(--code)}
+.bad{color:var(--accent2);font-weight:600}
+.good{color:var(--accent3);font-weight:600}
+.slider{width:100%;margin:10px 0}
+.readout{font-family:ui-monospace,monospace;font-size:14px;color:var(--muted)}
+.readout b{color:var(--ink);font-size:22px}
+.grid{display:grid;gap:14px;grid-template-columns:repeat(auto-fit,minmax(180px,1fr))}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:16px}
+.card .n{font-family:ui-monospace,monospace;font-size:27px;color:var(--accent);font-weight:600}
+.card .l{font-size:13px;color:var(--muted);margin-top:4px;line-height:1.4}
+.legend{display:flex;flex-wrap:wrap;gap:14px;font-size:12px;
+ font-family:ui-monospace,monospace;color:var(--muted);margin-top:10px}
+.legend i{display:inline-block;width:11px;height:11px;border-radius:2px;
+ margin-right:5px;vertical-align:-1px}
+footer{margin-top:64px;padding-top:24px;border-top:1px solid var(--line);
+ color:var(--muted);font-size:14px}
+ul{padding-left:22px;margin:0 0 14px}
+li{margin-bottom:7px}
+code{background:var(--code);padding:2px 5px;border-radius:4px;
+ font-family:ui-monospace,monospace;font-size:13px}
+.cap{font-size:13px;color:var(--muted);margin-top:8px;font-style:italic}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header>
+  <div class="kicker">First-draft research report</div>
+  <h1>How much personal history is enough?</h1>
+  <p class="sub">Measuring the data requirement for individualised financial behavioural anomaly detection.</p>
+  <div>
+    <span class="badge">300 real bank accounts</span>
+    <span class="badge">240 simulated individuals</span>
+    <span class="badge">1,056,320 transactions</span>
+    <span class="badge">seed 20260920</span>
+  </div>
+</header>
+
+<div class="note">
+<strong>Read this first.</strong> An anomaly is a deviation from a behavioural baseline. It is
+not fraud. This study produces no evidence about fraud, and nothing here should be used to
+justify adverse action against a customer. Every number on this page was produced by executed
+code; nothing is estimated or illustrative.
+</div>
+
+<h2>The question</h2>
+<p>A personalised anomaly detector compares each transaction against a model of one person's own
+past. At the moment an account opens there is no past. Somewhere between zero transactions and a
+lifetime of them, the personal baseline becomes worth using.</p>
+<p>Production systems handle this with a cutoff. One patent family describes filtering out
+"unseasoned users, i.e. users with insufficient history." The cutoff is treated as a known
+engineering parameter. We could not find published work measuring it.</p>
+
+<div class="grid">
+  <div class="card"><div class="n">25</div><div class="l">transactions to reach 90% of best ranking performance</div></div>
+  <div class="card"><div class="n">50</div><div class="l">transactions before the false-positive rate is tolerable</div></div>
+  <div class="card"><div class="n">96%</div><div class="l">of all transactions flagged at 10 transactions of history</div></div>
+  <div class="card"><div class="n">never</div><div class="l">history size at which performance stabilises across individuals</div></div>
+</div>
+
+<h2>1. Data-efficiency curves on real data</h2>
+<p>Each account's evaluation window is its last 60 transactions, fixed. Training history is the
+<i>n</i> transactions immediately before it. The window never changes, so comparisons across
+history sizes are paired within account and nothing is ever both trained on and tested on.</p>
+<p>Ground truth is <b>provenance</b>, not a statistical rule: a held-out transaction is replaced by
+a real transaction from a different real account. No detector's score is involved in producing the
+label, so it cannot be circular.</p>
+
+<div class="panel">
+  <div class="ctrls" id="c1"></div>
+  <div class="ctrls" id="c1p"></div>
+  <div class="chart"><svg id="chart1" viewBox="0 0 760 420" role="img"
+    aria-label="PR-AUC against personal training transactions"></svg></div>
+  <div class="legend" id="leg1"></div>
+  <p class="cap">Shaded bands are 95% bootstrap confidence intervals over accounts
+  (2,000 resamples). Dashed line is the population model, which uses no personal data.
+  Prevalence baseline is 0.100.</p>
+</div>
+
+<p>Three regimes. Mahalanobis and the autoencoder rise steeply and saturate early. k-NN is flat or
+declining to 25 transactions, then jumps. Both univariate z-scores on transaction amount are
+<b>flat from 1 to 250</b> — they never learn anything at all.</p>
+
+<h3>Saturation fits</h3>
+<div class="tblwrap"><table id="tsat"></table></div>
+<p class="cap">Four of six curves are well described by a saturating exponential. The Gaussian-z fit
+has R² = 0.469 and a nonsensical y₀; we report it and decline to interpret it, because a saturation
+model is not the right description of a flat curve. This is why R² is reported rather than
+parameters alone.</p>
+
+<h2>2. Ranking quality and deployability are not the same thing</h2>
+<p>PR-AUC measures ranking. A deployed detector needs an operating point. We set the threshold at
+the 95th percentile of the model's scores on <i>its own training data</i> — the rule a real system
+could apply, without touching test labels.</p>
+
+<div class="panel">
+  <div class="tblwrap"><table id="top"></table></div>
+  <p class="cap">Shrinkage Mahalanobis, personal arm. At 10 transactions PR-AUC is 0.441, more than
+  four times the prevalence baseline, and the same model flags 96% of everything. It achieves near
+  perfect recall by alerting on almost all transactions.</p>
+</div>
+
+<p>With a short history the model cannot estimate the <i>scale</i> of its own score distribution
+even when it ranks tolerably well. The 95th percentile of ten training scores is a poor estimate of
+the 95th percentile of the score distribution. <b>Ranking ability and calibration have different
+data requirements, and calibration is the more expensive of the two.</b></p>
+
+<h2>3. Threshold explorer</h2>
+<p>A "personalisation threshold" is not one quantity. Move the slider to see how the relative
+criterion — the smallest history reaching a given fraction of the model's best observed
+performance, and holding it — changes the answer.</p>
+
+<div class="panel">
+  <input class="slider" type="range" id="frac" min="50" max="99" value="90" step="1">
+  <div class="readout">Criterion: <b><span id="fracv">90</span>%</b> of best observed performance</div>
+  <div class="tblwrap"><table id="tthr"></table></div>
+  <p class="cap">Note the failure mode: a relative criterion rewards models that never improve.
+  Robust z reaches 90% of its own (worthless) best at 1 transaction. A relative threshold answers
+  "when does this model stop improving", not "when is this model any good".</p>
+</div>
+
+<div class="note">
+<strong>The stability criterion is undefined for every model that works.</strong> Across-account
+standard deviation never falls below its own median for Mahalanobis, k-NN, the autoencoder or
+Isolation Forest, at any history size. The mean curve hides enormous individual variation that does
+not shrink with more data. A system meeting a target on average will still fail badly for a
+substantial minority of users.
+</div>
+
+<h2>4. Personal, population, and hybrid</h2>
+<p>The hybrid shrinks personal estimates toward population estimates with a weight determined only
+by history size:</p>
+<p style="text-align:center"><code>μ = (n·μ_personal + κ·μ_global) / (n + κ)</code>, κ = 25 fixed in advance</p>
+<p>At n = 0 this is exactly the population model; as n grows it converges to the personal model.</p>
+
+<div class="panel">
+  <div class="ctrls" id="c2"></div>
+  <div class="chart"><svg id="chart2" viewBox="0 0 760 400" role="img"
+    aria-label="Personal, global and hybrid arms"></svg></div>
+  <div class="legend" id="leg2"></div>
+</div>
+
+<div class="tblwrap"><table id="tarms"></table></div>
+<p class="cap">Paired over 300 accounts. Personalisation is <b>actively harmful</b> below a
+model-dependent crossover: between 5 and 10 transactions for Mahalanobis, between 25 and 50 for
+k-NN. Below it, a model built from strangers' data beats the person's own history by large effect
+sizes.</p>
+
+<p>The hybrid is far better than the personal model when history is scarce (+0.188 at n = 5) and
+indistinguishable from it beyond 25 (Holm-adjusted p ≥ 0.795). It is never worse than either parent
+at any size.</p>
+
+<div class="note">
+<strong>A contrary result we report because it qualifies the above.</strong> In the simulation the
+same hybrid plateaus at 0.401 while the personal model reaches 0.924. The simulation's strongest
+features are personal novelty indicators — is this merchant one <i>you</i> have used — and the
+hybrid computes them against the population reference, destroying exactly the signal that matters.
+Parameter shrinkage cannot recover information the feature representation has already discarded.
+Hybrids help when personal signal lives in the parameters of a shared representation, not when it
+lives in the representation itself.
+</div>
+
+<h2>5. Behavioural complexity: a controlled result and a real-data null</h2>
+<p>The real dataset has no merchant, category or geography fields, and variability can only be
+observed, not manipulated. So we also simulated 240 individuals across six archetypes, each defined
+by a measurable parameter vector rather than a label.</p>
+
+<div class="panel">
+  <div class="chart"><svg id="chart3" viewBox="0 0 760 400" role="img"
+    aria-label="Simulation data efficiency by archetype"></svg></div>
+  <div class="legend" id="leg3"></div>
+  <p class="cap">Simulation only. Nothing here is a real-world observation.</p>
+</div>
+
+<div class="tblwrap"><table id="tarch"></table></div>
+<p class="cap">The archetypes differ <b>tenfold</b> in data requirement while converging to similar
+asymptotes. Variability changes the rate of learning far more than the ceiling.</p>
+
+<h3>The same test on real accounts</h3>
+<div class="tblwrap"><table id="tcomp"></table></div>
+<p class="cap">Spearman correlations, Holm-corrected across the family of eight. <b>No descriptor
+predicts an account's data requirement</b> (all adjusted p ≥ 0.867, all |ρ| ≤ 0.12). We report the
+null rather than selecting an uncorrected result.</p>
+
+<p>Two caveats limit how strongly the null should be read. 117 of 300 accounts (39%) had no defined
+threshold at all, because their curve never reached and held 90% of their own best, so the
+correlation runs on a non-random better-behaved subset. And the descriptors do correlate with
+<i>best achievable</i> performance: accounts with more diverse usage are easier to protect
+(ρ ≈ 0.20), plausibly because a distinctive profile is easier to tell from an impostor's.</p>
+
+<p><b>We cannot distinguish three explanations.</b> The Berka descriptors may be too thin, since the
+dataset lacks exactly the channels that carry the simulation's effect. The real cohort's variability
+range may be too narrow. Or observed variability in real data may be confounded with account type
+and tenure in ways the simulation excludes by construction. The simulation result is not evidence
+that the effect exists in real data; it is evidence that the effect exists when the generative
+parameters are what the theory says they are.</p>
+
+<h2>6. Anomaly classes have different data requirements</h2>
+<div class="panel">
+  <div class="chart"><svg id="chart4" viewBox="0 0 760 400" role="img"
+    aria-label="Detectability by anomaly class"></svg></div>
+  <div class="legend" id="leg4"></div>
+  <p class="cap">Mean anomaly-score percentile, simulation. 0.5 is chance.</p>
+</div>
+<p>Categorical-novelty anomalies (merchant, category, geography) start near chance and improve
+steeply, because recognising an unfamiliar merchant requires having seen the familiar ones. Amount
+and temporal anomalies start well above chance at one transaction and improve least. Amount
+detectability actually <i>declines</i> from 0.789 at n = 1 to 0.576 at n = 10 before recovering:
+apparent competence at n = 1 is an artefact of degenerate variance, not detection.</p>
+
+<h2>7. Count versus time, and a correction we had to make</h2>
+<div class="note">
+<strong>Our first version of this experiment was wrong.</strong> We widened temporal coverage by
+stride-sampling history, which changes the inter-arrival gap feature: under stride 2 the computed
+gaps double. It reported a large degradation (0.647 → 0.435). Most of that was a feature artefact.
+We recomputed gap features against each transaction's true position in the unthinned timeline and
+re-ran. The corrected effect is roughly six times smaller.
+</div>
+
+<div class="tblwrap"><table id="ttemp"></table></div>
+<p class="cap">Transaction count held fixed at 50, 300 accounts.</p>
+
+<p>A control arm we intended also <b>failed</b>, and we report it as such: with count held fixed,
+thinning by k <i>necessarily</i> reaches back k times further, so the control had the same span as
+the treatment. This is a logical property of the design, not a bug. Temporal coverage and sampling
+density cannot be varied independently at fixed count, so this question is not fully separable.</p>
+
+<p>What can still be said: raising count from 50 to 250 at natural density changes performance from
+0.647 to 0.642, essentially nothing, while holding count at 50 and drawing from a four-times-longer
+span costs 0.036. <b>Recency dominates volume.</b> This is consistent with behavioural drift, but we
+did not measure drift directly, so that is an interpretation rather than a finding.</p>
+
+<h2>8. Does the finding survive a different anomaly definition?</h2>
+<div class="panel">
+  <div class="ctrls" id="c5"></div>
+  <div class="chart"><svg id="chart5" viewBox="0 0 760 400" role="img"
+    aria-label="Protocol comparison"></svg></div>
+  <div class="legend" id="leg5"></div>
+</div>
+<p>Under a ×5 amount-shift protocol the ordering changes: univariate Gaussian z, useless under the
+impostor protocol, becomes competitive, which is expected when the perturbation is applied to amount
+alone. Mahalanobis remains best at a lower level, and its relative-90 threshold is <b>again 25</b>.
+The threshold estimate is stable across two structurally different anomaly definitions; the
+achievable <i>level</i> is strongly protocol-dependent and should not be transferred between them.</p>
+
+<h2>9. Computational cost</h2>
+<div class="tblwrap"><table id="tcost"></table></div>
+<p class="cap">Median fit-and-score time in milliseconds. At 250 transactions Isolation Forest costs
+340× more than Mahalanobis while performing worst at every history size.</p>
+
+<h2>10. Limitations</h2>
+<ul>
+<li>One dataset, one bank, one country, 1993-1998 retail banking. Generalisation to modern card payments is untested.</li>
+<li>Day-resolution timestamps. No merchant, category or geographic channels on real data — precisely the channels with the steepest data requirements in simulation.</li>
+<li>Real-data history stops at 250 because only 119 of 4,500 accounts have 500+ transactions.</li>
+<li>The evaluated cohort is the more active half of the dataset, so it is <i>least</i> representative of the sparse-history users this study is most about.</li>
+<li>Neither injection protocol models an adversary trying to imitate the account holder — the hardest and most important case.</li>
+<li>The 10% injection rate is far above realistic fraud prevalence. Curve shape transfers; absolute values do not.</li>
+<li>Single seed for cohort selection. κ = 25 was fixed in advance, not tuned.</li>
+<li>Wilcoxon p values over 300 paired accounts are tiny for effects of any size, which is why effect sizes appear beside every test.</li>
+</ul>
+
+<h2>11. Ethics</h2>
+<p>The transactions these detectors flag are, by construction, transactions that differ from a
+person's past. In real life those are holidays, house moves, medical costs, a new job, a death in
+the family, leaving an abusive relationship. A system that escalates deviation to suspicion punishes
+people for changing.</p>
+<p>False positives and false negatives are not symmetric. A missed anomaly costs an institution
+money. A false positive can mean a declined card abroad, a frozen account during an emergency, or a
+customer treated as a suspect.</p>
+<p><b>Sparse-history users bear the cost.</b> They are disproportionately new customers, young
+people, recent immigrants and people re-entering formal banking — exactly the users for whom a
+personal model flags almost everything. Deploying personalisation without a history floor
+concentrates false positives on populations already more likely to face financial exclusion. Our
+finding that a population or hybrid model beats personalisation in the sparse regime is directly
+relevant: for these users, personalisation is not merely useless, it is harmful.</p>
+<p>Behavioural features are proxies for life circumstances. Irregular income, cash reliance and
+geographic mobility correlate with class, occupation, immigration status and disability. A detector
+calibrated on regular salaried behaviour treats irregular lives as anomalous by default. We did not
+audit for disparate impact, and no system of this kind should be deployed without one.</p>
+
+<h2>12. What we did not do</h2>
+<ul>
+<li>Multi-seed repetition of cohort selection.</li>
+<li>Any evaluation against confirmed fraud labels — no labelled dataset with per-user histories was available.</li>
+<li>Adversarial anomalies designed to evade a personal baseline.</li>
+<li>Replication on card-payment data to test whether curve shapes transfer.</li>
+<li>Disparate-impact audit across account or demographic segments.</li>
+<li>Direct measurement of behavioural drift.</li>
+</ul>
+
+<footer>
+<p>First-draft research output. Dataset: PKDD'99 Financial Dataset, prepared by Petr Berka and Marta
+Sochorova for the PKDD'99 Discovery Challenge. Real anonymised Czech bank transactions, 1993-1998.
+All eight tables verified against the record counts published by the primary source before use.</p>
+<p>Every figure and table on this page is generated from committed result files. Full methodology,
+references, decision log and reproduction commands accompany this report.</p>
+</footer>
+
+</div>
+
+<script>
+const D = {"e1": {"autoencoder": {"n": [1, 5, 10, 25, 50, 100, 250], "mean": [0.1611, 0.2175, 0.3598, 0.5019, 0.5031, 0.5166, 0.5105], "lo": [0.151, 0.2038, 0.3395, 0.4798, 0.4817, 0.4948, 0.4883], "hi": [0.1726, 0.232, 0.381, 0.5247, 0.5249, 0.5389, 0.5315], "sd": [0.0944, 0.1224, 0.1767, 0.1961, 0.1947, 0.1962, 0.1951]}, "gaussian_z": {"n": [1, 5, 10, 25, 50, 100, 250], "mean": [0.1606, 0.177, 0.1741, 0.1697, 0.1681, 0.1663, 0.1668], "lo": [0.1501, 0.1636, 0.1622, 0.158, 0.1566, 0.1548, 0.1551], "hi": [0.173, 0.1903, 0.1874, 0.1825, 0.1807, 0.1785, 0.1789], "sd": [0.1, 0.1181, 0.1124, 0.1067, 0.1066, 0.1042, 0.1046]}, "iforest": {"n": [1, 5, 10, 25, 50, 100, 250], "mean": [0.1, 0.1485, 0.1362, 0.1808, 0.2298, 0.2918, 0.3427], "lo": [0.1, 0.1396, 0.1292, 0.1698, 0.2168, 0.2765, 0.3253], "hi": [0.1, 0.1575, 0.1434, 0.192, 0.2425, 0.3071, 0.3607], "sd": [0.0, 0.0784, 0.0628, 0.0999, 0.1131, 0.1387, 0.1546]}, "knn": {"n": [1, 5, 10, 25, 50, 100, 250], "mean": [0.1606, 0.1475, 0.1324, 0.2036, 0.5232, 0.5633, 0.6091], "lo": [0.1503, 0.1381, 0.1256, 0.1876, 0.5015, 0.5419, 0.5879], "hi": [0.172, 0.1566, 0.1398, 0.2205, 0.5465, 0.5861, 0.6294], "sd": [0.0941, 0.082, 0.0639, 0.1458, 0.1986, 0.1895, 0.1815]}, "mahalanobis": {"n": [1, 5, 10, 25, 50, 100, 250], "mean": [0.1611, 0.2101, 0.4407, 0.6247, 0.647, 0.6573, 0.6415], "lo": [0.1507, 0.1972, 0.4167, 0.6028, 0.6273, 0.6371, 0.6209], "hi": [0.1725, 0.2236, 0.4663, 0.6457, 0.6669, 0.6765, 0.661], "sd": [0.0946, 0.1141, 0.217, 0.1858, 0.1732, 0.1721, 0.1759]}, "robust_z": {"n": [1, 5, 10, 25, 50, 100, 250], "mean": [0.1606, 0.1624, 0.159, 0.1557, 0.1532, 0.1535, 0.1533], "lo": [0.1501, 0.1524, 0.1491, 0.1461, 0.1441, 0.1442, 0.1443], "hi": [0.173, 0.1732, 0.1694, 0.1659, 0.1632, 0.1634, 0.1633], "sd": [0.1, 0.0911, 0.0905, 0.0877, 0.0855, 0.0851, 0.0829]}}, "e1_global": {"autoencoder": 0.3907, "gaussian_z": 0.136, "iforest": 0.3359, "knn": 0.4646, "mahalanobis": 0.33, "robust_z": 0.1373}, "e2": {"autoencoder": {"n": [1, 5, 10, 25, 50, 100, 250], "mean": [0.2581, 0.1595, 0.1735, 0.1924, 0.1865, 0.1869, 0.1886], "lo": [0.2354, 0.1505, 0.1635, 0.1817, 0.1763, 0.1771, 0.1783], "hi": [0.2815, 0.1697, 0.1844, 0.2042, 0.1976, 0.1977, 0.1994], "sd": [0.2118, 0.0855, 0.0929, 0.1003, 0.0916, 0.0908, 0.0931]}, "gaussian_z": {"n": [1, 5, 10, 25, 50, 100, 250], "mean": [0.2782, 0.3246, 0.2922, 0.2917, 0.2993, 0.2943, 0.2916], "lo": [0.2555, 0.3046, 0.2743, 0.2735, 0.2814, 0.2759, 0.2738], "hi": [0.3008, 0.3464, 0.3104, 0.3103, 0.3184, 0.3137, 0.3098], "sd": [0.2096, 0.1866, 0.1636, 0.1601, 0.1686, 0.1667, 0.1619]}, "iforest": {"n": [1, 5, 10, 25, 50, 100, 250], "mean": [0.1, 0.1494, 0.1458, 0.163, 0.1776, 0.1944, 0.211], "lo": [0.1, 0.1415, 0.1386, 0.154, 0.1678, 0.1834, 0.1994], "hi": [0.1, 0.1574, 0.1532, 0.1719, 0.1882, 0.2057, 0.2229], "sd": [0.0, 0.0705, 0.0667, 0.0792, 0.094, 0.0996, 0.1065]}, "knn": {"n": [1, 5, 10, 25, 50, 100, 250], "mean": [0.2585, 0.1792, 0.1547, 0.1525, 0.198, 0.212, 0.2167], "lo": [0.2356, 0.1687, 0.146, 0.1452, 0.1885, 0.2016, 0.2053], "hi": [0.2817, 0.1902, 0.1632, 0.1611, 0.208, 0.2224, 0.2281], "sd": [0.2117, 0.0932, 0.0758, 0.0679, 0.0838, 0.0877, 0.098]}, "mahalanobis": {"n": [1, 5, 10, 25, 50, 100, 250], "mean": [0.2585, 0.1635, 0.2357, 0.4229, 0.4344, 0.4547, 0.4533], "lo": [0.2356, 0.154, 0.2208, 0.4011, 0.4132, 0.4334, 0.4309], "hi": [0.2817, 0.1747, 0.2514, 0.4461, 0.4559, 0.4757, 0.4751], "sd": [0.2118, 0.0914, 0.1373, 0.1952, 0.1836, 0.1789, 0.1909]}, "robust_z": {"n": [1, 5, 10, 25, 50, 100, 250], "mean": [0.2782, 0.2289, 0.2218, 0.1987, 0.1897, 0.1915, 0.1898], "lo": [0.2555, 0.2122, 0.2061, 0.1869, 0.1792, 0.1805, 0.1796], "hi": [0.3008, 0.246, 0.2374, 0.2114, 0.2018, 0.204, 0.2021], "sd": [0.2096, 0.1501, 0.1391, 0.1116, 0.1011, 0.1042, 0.0997]}}, "e2_global": {"autoencoder": 0.2114, "gaussian_z": 0.2501, "iforest": 0.2316, "knn": 0.2407, "mahalanobis": 0.2868, "robust_z": 0.1712}, "arms": {"autoencoder": {"global": {"n": [1, 5, 10, 25, 50, 100, 250], "mean": [0.3907, 0.3907, 0.3907, 0.3907, 0.3907, 0.3907, 0.3907]}, "personal": {"n": [1, 5, 10, 25, 50, 100, 250], "mean": [0.1611, 0.2175, 0.3598, 0.5019, 0.5031, 0.5166, 0.5105]}}, "gaussian_z": {"global": {"n": [1, 5, 10, 25, 50, 100, 250], "mean": [0.136, 0.136, 0.136, 0.136, 0.136, 0.136, 0.136]}, "personal": {"n": [1, 5, 10, 25, 50, 100, 250], "mean": [0.1606, 0.177, 0.1741, 0.1697, 0.1681, 0.1663, 0.1668]}}, "iforest": {"global": {"n": [1, 5, 10, 25, 50, 100, 250], "mean": [0.3359, 0.3359, 0.3359, 0.3359, 0.3359, 0.3359, 0.3359]}, "personal": {"n": [1, 5, 10, 25, 50, 100, 250], "mean": [0.1, 0.1485, 0.1362, 0.1808, 0.2298, 0.2918, 0.3427]}}, "knn": {"global": {"n": [1, 5, 10, 25, 50, 100, 250], "mean": [0.4646, 0.4646, 0.4646, 0.4646, 0.4646, 0.4646, 0.4646]}, "hybrid_fusion": {"n": [1, 5, 10, 25, 50, 100, 250], "mean": [0.4638, 0.4054, 0.4138, 0.4588, 0.5845, 0.6095, 0.6437]}, "personal": {"n": [1, 5, 10, 25, 50, 100, 250], "mean": [0.1606, 0.1475, 0.1324, 0.2036, 0.5232, 0.5633, 0.6091]}}, "mahalanobis": {"global": {"n": [1, 5, 10, 25, 50, 100, 250], "mean": [0.33, 0.33, 0.33, 0.33, 0.33, 0.33, 0.33]}, "hybrid_shrinkage": {"n": [1, 5, 10, 25, 50, 100, 250], "mean": [0.3293, 0.3979, 0.4736, 0.6091, 0.6483, 0.6543, 0.6392]}, "personal": {"n": [1, 5, 10, 25, 50, 100, 250], "mean": [0.1611, 0.2101, 0.4407, 0.6247, 0.647, 0.6573, 0.6415]}}, "robust_z": {"global": {"n": [1, 5, 10, 25, 50, 100, 250], "mean": [0.1373, 0.1373, 0.1373, 0.1373, 0.1373, 0.1373, 0.1373]}, "personal": {"n": [1, 5, 10, 25, 50, 100, 250], "mean": [0.1606, 0.1624, 0.159, 0.1557, 0.1532, 0.1535, 0.1533]}}}, "op": {"n": [1, 5, 10, 25, 50, 100, 250], "precision": [0.1, 0.101, 0.104, 0.256, 0.357, 0.417, 0.46], "recall": [1.0, 1.0, 0.997, 0.899, 0.811, 0.753, 0.687], "f1": [0.182, 0.184, 0.189, 0.391, 0.483, 0.523, 0.536], "fpr": [0.999, 0.988, 0.956, 0.335, 0.189, 0.134, 0.104], "flag_rate": [0.999, 0.989, 0.96, 0.391, 0.251, 0.196, 0.162]}, "cost": {"autoencoder": {"1": 11.79, "5": 12.57, "10": 12.87, "25": 13.25, "50": 14.7, "100": 16.24, "250": 22.86}, "gaussian_z": {"1": 0.03, "5": 0.1, "10": 0.09, "25": 0.09, "50": 0.09, "100": 0.08, "250": 0.08}, "iforest": {"1": 130.34, "5": 132.43, "10": 134.25, "25": 135.72, "50": 139.43, "100": 143.87, "250": 156.29}, "knn": {"1": 0.03, "5": 0.06, "10": 0.11, "25": 0.23, "50": 0.41, "100": 1.02, "250": 5.03}, "mahalanobis": {"1": 0.19, "5": 0.29, "10": 0.29, "25": 0.3, "50": 0.32, "100": 0.35, "250": 0.46}, "robust_z": {"1": 0.06, "5": 0.05, "10": 0.06, "25": 0.06, "50": 0.06, "100": 0.06, "250": 0.07}}, "sim": {"burst": {"n": [1, 5, 10, 25, 50, 100, 250, 500], "mean": [0.2404, 0.2768, 0.3079, 0.472, 0.5917, 0.7497, 0.9082, 0.9275]}, "moderate": {"n": [1, 5, 10, 25, 50, 100, 250, 500], "mean": [0.3511, 0.3051, 0.3359, 0.5053, 0.6476, 0.7794, 0.9083, 0.9289]}, "regular": {"n": [1, 5, 10, 25, 50, 100, 250, 500], "mean": [0.4, 0.3888, 0.6682, 0.8335, 0.8949, 0.925, 0.9388, 0.9363]}, "seasonal": {"n": [1, 5, 10, 25, 50, 100, 250, 500], "mean": [0.3304, 0.2466, 0.3374, 0.4269, 0.5588, 0.6436, 0.8402, 0.9226]}, "traveller": {"n": [1, 5, 10, 25, 50, 100, 250, 500], "mean": [0.2601, 0.2187, 0.23, 0.3241, 0.4485, 0.5715, 0.8232, 0.928]}, "variable": {"n": [1, 5, 10, 25, 50, 100, 250, 500], "mean": [0.3428, 0.2162, 0.2435, 0.3278, 0.4433, 0.5439, 0.7359, 0.9001]}}, "classes": {"n": [1, 5, 10, 25, 50, 100, 250, 500], "amount": [0.789, 0.626, 0.576, 0.678, 0.744, 0.803, 0.861, 0.873], "category": [0.547, 0.625, 0.745, 0.835, 0.892, 0.931, 0.957, 0.964], "geographic": [0.642, 0.629, 0.811, 0.868, 0.913, 0.943, 0.969, 0.974], "merchant": [0.545, 0.55, 0.67, 0.757, 0.838, 0.906, 0.947, 0.955], "multivariate": [0.896, 0.773, 0.932, 0.986, 0.999, 1.0, 1.0, 1.0], "temporal": [0.721, 0.787, 0.666, 0.703, 0.738, 0.802, 0.845, 0.855]}, "sat": [{"ok": true, "y0": 0.106, "ymax": 0.518, "tau": 11.084, "r2": 0.98, "model": "autoencoder"}, {"ok": true, "y0": -0.37, "ymax": 0.17, "tau": 0.249, "r2": 0.469, "model": "gaussian_z"}, {"ok": true, "y0": 0.111, "ymax": 0.35, "tau": 71.221, "r2": 0.985, "model": "iforest"}, {"ok": true, "y0": 0.089, "ymax": 0.633, "tau": 50.909, "r2": 0.912, "model": "knn"}, {"ok": true, "y0": 0.078, "ymax": 0.658, "tau": 11.542, "r2": 0.97, "model": "mahalanobis"}, {"ok": true, "y0": 0.162, "ymax": 0.153, "tau": 21.69, "r2": 0.924, "model": "robust_z"}], "archthr": [{"archetype": "burst", "threshold": 250.0, "best": 0.927}, {"archetype": "moderate", "threshold": 250.0, "best": 0.929}, {"archetype": "regular", "threshold": 50.0, "best": 0.939}, {"archetype": "seasonal", "threshold": 250.0, "best": 0.923}, {"archetype": "traveller", "threshold": 500.0, "best": 0.928}, {"archetype": "variable", "threshold": 500.0, "best": 0.9}], "temporal": [{"model": "knn", "arm": "stride1", "pr_auc": 0.5397, "span_days": 224.0, "lookback": 224.0, "n": 300}, {"model": "knn", "arm": "stride2", "pr_auc": 0.4782, "span_days": 456.5, "lookback": 456.5, "n": 300}, {"model": "knn", "arm": "stride4", "pr_auc": 0.4296, "span_days": 946.0, "lookback": 946.0, "n": 300}, {"model": "knn", "arm": "thin4_recent", "pr_auc": 0.4298, "span_days": 950.5, "lookback": 963.5, "n": 300}, {"model": "mahalanobis", "arm": "stride1", "pr_auc": 0.6633, "span_days": 224.0, "lookback": 224.0, "n": 300}, {"model": "mahalanobis", "arm": "stride2", "pr_auc": 0.6597, "span_days": 456.5, "lookback": 456.5, "n": 300}, {"model": "mahalanobis", "arm": "stride4", "pr_auc": 0.6272, "span_days": 946.0, "lookback": 946.0, "n": 300}, {"model": "mahalanobis", "arm": "thin4_recent", "pr_auc": 0.64, "span_days": 950.5, "lookback": 963.5, "n": 300}], "complex_real": [{"descriptor": "amount_cv", "spearman_rho_vs_threshold": -0.1191, "p_vs_threshold": 0.1084, "spearman_rho_vs_best_prauc": -0.1361, "p_vs_best_prauc": 0.0662, "n": 183, "p_holm_vs_threshold": 0.8672}, {"descriptor": "amount_rcv", "spearman_rho_vs_threshold": -0.0494, "p_vs_threshold": 0.5069, "spearman_rho_vs_best_prauc": -0.0341, "p_vs_best_prauc": 0.647, "n": 183, "p_holm_vs_threshold": 1.0}, {"descriptor": "log_amount_iqr", "spearman_rho_vs_threshold": -0.0327, "p_vs_threshold": 0.6607, "spearman_rho_vs_best_prauc": 0.0051, "p_vs_best_prauc": 0.9458, "n": 183, "p_holm_vs_threshold": 1.0}, {"descriptor": "operation_entropy", "spearman_rho_vs_threshold": 0.1128, "p_vs_threshold": 0.1283, "spearman_rho_vs_best_prauc": 0.2089, "p_vs_best_prauc": 0.0045, "n": 183, "p_holm_vs_threshold": 0.8982}, {"descriptor": "ksymbol_entropy", "spearman_rho_vs_threshold": -0.01, "p_vs_threshold": 0.8933, "spearman_rho_vs_best_prauc": 0.1957, "p_vs_best_prauc": 0.0079, "n": 183, "p_holm_vs_threshold": 1.0}, {"descriptor": "operation_diversity", "spearman_rho_vs_threshold": -0.0526, "p_vs_threshold": 0.4792, "spearman_rho_vs_best_prauc": 0.1667, "p_vs_best_prauc": 0.0241, "n": 183, "p_holm_vs_threshold": 1.0}, {"descriptor": "gap_cv", "spearman_rho_vs_threshold": 0.0814, "p_vs_threshold": 0.2731, "spearman_rho_vs_best_prauc": -0.0358, "p_vs_best_prauc": 0.6307, "n": 183, "p_holm_vs_threshold": 1.0}, {"descriptor": "credit_share", "spearman_rho_vs_threshold": 0.0904, "p_vs_threshold": 0.2238, "spearman_rho_vs_best_prauc": -0.0168, "p_vs_best_prauc": 0.8218, "n": 183, "p_holm_vs_threshold": 1.0}], "complex_sim": [{"descriptor": "log_amount_sd", "rho_vs_threshold": 0.6728, "p_vs_threshold": 0.0, "rho_vs_best": -0.2553, "p_vs_best": 0.0001, "n": 240, "p_holm": 0.0}, {"descriptor": "merchant_entropy", "rho_vs_threshold": 0.6995, "p_vs_threshold": 0.0, "rho_vs_best": -0.2884, "p_vs_best": 0.0, "n": 240, "p_holm": 0.0}, {"descriptor": "category_entropy", "rho_vs_threshold": 0.7002, "p_vs_threshold": 0.0, "rho_vs_best": -0.2839, "p_vs_best": 0.0, "n": 240, "p_holm": 0.0}, {"descriptor": "location_entropy", "rho_vs_threshold": 0.6167, "p_vs_threshold": 0.0, "rho_vs_best": -0.1721, "p_vs_best": 0.0075, "n": 240, "p_holm": 0.0}, {"descriptor": "gap_cv", "rho_vs_threshold": 0.4842, "p_vs_threshold": 0.0, "rho_vs_best": -0.1891, "p_vs_best": 0.0033, "n": 240, "p_holm": 0.0}, {"descriptor": "n_unique_merchants", "rho_vs_threshold": 0.708, "p_vs_threshold": 0.0, "rho_vs_best": -0.2592, "p_vs_best": 0.0, "n": 240, "p_holm": 0.0}], "pvg": [{"history_size": 1, "personal_mean": 0.1611, "other_mean": 0.33, "paired_diff": -0.1689, "ci_lo": -0.196, "ci_hi": -0.1423, "wilcoxon_p": 0.0, "effect_rank_biserial": -0.6861, "n_pairs": 300, "p_holm": 0.0}, {"history_size": 5, "personal_mean": 0.2101, "other_mean": 0.33, "paired_diff": -0.12, "ci_lo": -0.1442, "ci_hi": -0.0961, "wilcoxon_p": 0.0, "effect_rank_biserial": -0.5444, "n_pairs": 300, "p_holm": 0.0}, {"history_size": 10, "personal_mean": 0.4407, "other_mean": 0.33, "paired_diff": 0.1106, "ci_lo": 0.0822, "ci_hi": 0.1402, "wilcoxon_p": 0.0, "effect_rank_biserial": 0.4653, "n_pairs": 300, "p_holm": 0.0}, {"history_size": 25, "personal_mean": 0.6247, "other_mean": 0.33, "paired_diff": 0.2946, "ci_lo": 0.2655, "ci_hi": 0.3236, "wilcoxon_p": 0.0, "effect_rank_biserial": 0.8816, "n_pairs": 300, "p_holm": 0.0}, {"history_size": 50, "personal_mean": 0.647, "other_mean": 0.33, "paired_diff": 0.317, "ci_lo": 0.2897, "ci_hi": 0.3447, "wilcoxon_p": 0.0, "effect_rank_biserial": 0.9317, "n_pairs": 300, "p_holm": 0.0}, {"history_size": 100, "personal_mean": 0.6573, "other_mean": 0.33, "paired_diff": 0.3273, "ci_lo": 0.2986, "ci_hi": 0.3549, "wilcoxon_p": 0.0, "effect_rank_biserial": 0.9396, "n_pairs": 300, "p_holm": 0.0}, {"history_size": 250, "personal_mean": 0.6415, "other_mean": 0.33, "paired_diff": 0.3115, "ci_lo": 0.2844, "ci_hi": 0.3376, "wilcoxon_p": 0.0, "effect_rank_biserial": 0.9332, "n_pairs": 300, "p_holm": 0.0}], "pvh": [{"history_size": 1, "personal_mean": 0.1611, "other_mean": 0.3293, "paired_diff": -0.1681, "ci_lo": -0.1953, "ci_hi": -0.1409, "wilcoxon_p": 0.0, "effect_rank_biserial": -0.6757, "n_pairs": 300, "p_holm": 0.0}, {"history_size": 5, "personal_mean": 0.2101, "other_mean": 0.3979, "paired_diff": -0.1878, "ci_lo": -0.2125, "ci_hi": -0.162, "wilcoxon_p": 0.0, "effect_rank_biserial": -0.7738, "n_pairs": 300, "p_holm": 0.0}, {"history_size": 10, "personal_mean": 0.4407, "other_mean": 0.4736, "paired_diff": -0.0329, "ci_lo": -0.0579, "ci_hi": -0.0074, "wilcoxon_p": 0.0156, "effect_rank_biserial": -0.1611, "n_pairs": 300, "p_holm": 0.078}, {"history_size": 25, "personal_mean": 0.6247, "other_mean": 0.6091, "paired_diff": 0.0155, "ci_lo": -0.0009, "ci_hi": 0.0316, "wilcoxon_p": 0.1986, "effect_rank_biserial": 0.0856, "n_pairs": 300, "p_holm": 0.7945}, {"history_size": 50, "personal_mean": 0.647, "other_mean": 0.6483, "paired_diff": -0.0013, "ci_lo": -0.0129, "ci_hi": 0.01, "wilcoxon_p": 0.7463, "effect_rank_biserial": -0.0216, "n_pairs": 300, "p_holm": 1.0}, {"history_size": 100, "personal_mean": 0.6573, "other_mean": 0.6543, "paired_diff": 0.003, "ci_lo": -0.0055, "ci_hi": 0.0117, "wilcoxon_p": 0.5192, "effect_rank_biserial": 0.0439, "n_pairs": 300, "p_holm": 1.0}, {"history_size": 250, "personal_mean": 0.6415, "other_mean": 0.6392, "paired_diff": 0.0023, "ci_lo": -0.0037, "ci_hi": 0.0083, "wilcoxon_p": 1.0, "effect_rank_biserial": 0.0, "n_pairs": 300, "p_holm": 1.0}]};
+
+const C = {mahalanobis:'#1b4965',knn:'#5fa8d3',iforest:'#c1666b',
+ autoencoder:'#d69f7e',gaussian_z:'#8d99ae',robust_z:'#b8bec9',
+ regular:'#1b4965',moderate:'#5fa8d3',seasonal:'#62b6cb',
+ burst:'#d69f7e',traveller:'#c1666b',variable:'#8a3033',
+ amount:'#1b4965',category:'#5fa8d3',geographic:'#2a9d8f',
+ merchant:'#d69f7e',multivariate:'#8a3033',temporal:'#8d99ae',
+ personal:'#1b4965',global:'#2a9d8f',hybrid_shrinkage:'#e07a5f',
+ hybrid_fusion:'#e07a5f'};
+
+const cs = k => getComputedStyle(document.documentElement)
+  .getPropertyValue(k).trim();
+
+function lineChart(svgId, legId, series, opts){
+  const svg = document.getElementById(svgId);
+  const W=760,H=+svg.getAttribute('viewBox').split(' ')[3];
+  const M={t:18,r:18,b:46,l:56};
+  const iw=W-M.l-M.r, ih=H-M.t-M.b;
+  const allN=[].concat(...series.map(s=>s.n));
+  const allY=[].concat(...series.map(s=>s.mean),
+    ...(opts.hline!==undefined?[opts.hline]:[]));
+  const y0=opts.y0!==undefined?opts.y0:0;
+  const y1=Math.min(1, Math.max(...allY)*1.12);
+  const lx=v=>M.l+(Math.log10(v)-Math.log10(Math.min(...allN)))/
+    (Math.log10(Math.max(...allN))-Math.log10(Math.min(...allN)))*iw;
+  const ly=v=>M.t+ih-(v-y0)/(y1-y0)*ih;
+  const ink=cs('--ink'), muted=cs('--muted'), line=cs('--line');
+  let o='';
+  // grid + y axis
+  const steps=5;
+  for(let i=0;i<=steps;i++){
+    const v=y0+(y1-y0)*i/steps, yy=ly(v);
+    o+=`<line x1="${M.l}" y1="${yy}" x2="${W-M.r}" y2="${yy}" stroke="${line}" stroke-width="1"/>`;
+    o+=`<text x="${M.l-9}" y="${yy+4}" fill="${muted}" font-size="11" text-anchor="end" font-family="monospace">${v.toFixed(2)}</text>`;
+  }
+  [...new Set(allN)].sort((a,b)=>a-b).forEach(n=>{
+    o+=`<text x="${lx(n)}" y="${H-M.b+20}" fill="${muted}" font-size="11" text-anchor="middle" font-family="monospace">${n}</text>`;
+  });
+  o+=`<text x="${M.l+iw/2}" y="${H-6}" fill="${muted}" font-size="12" text-anchor="middle">${opts.xlab||'personal training transactions (log scale)'}</text>`;
+  o+=`<text x="14" y="${M.t+ih/2}" fill="${muted}" font-size="12" text-anchor="middle" transform="rotate(-90 14 ${M.t+ih/2})">${opts.ylab||'PR-AUC'}</text>`;
+  if(opts.hline!==undefined){
+    o+=`<line x1="${M.l}" y1="${ly(opts.hline)}" x2="${W-M.r}" y2="${ly(opts.hline)}" stroke="${cs('--accent3')}" stroke-width="1.6" stroke-dasharray="6 4"/>`;
+    o+=`<text x="${W-M.r-4}" y="${ly(opts.hline)-7}" fill="${cs('--accent3')}" font-size="11" text-anchor="end" font-family="monospace">${opts.hlabel||''}</text>`;
+  }
+  series.forEach(s=>{
+    const col=C[s.key]||ink;
+    if(s.lo&&s.hi){
+      let up='',dn='';
+      s.n.forEach((n,i)=>{up+=`${lx(n)},${ly(s.hi[i])} `});
+      for(let i=s.n.length-1;i>=0;i--){dn+=`${lx(s.n[i])},${ly(s.lo[i])} `}
+      o+=`<polygon points="${up}${dn}" fill="${col}" opacity="0.13"/>`;
+    }
+    let p='';
+    s.n.forEach((n,i)=>{p+=(i?'L':'M')+lx(n)+','+ly(s.mean[i])});
+    o+=`<path d="${p}" fill="none" stroke="${col}" stroke-width="2.2" stroke-linejoin="round"/>`;
+    s.n.forEach((n,i)=>{o+=`<circle cx="${lx(n)}" cy="${ly(s.mean[i])}" r="3.4" fill="${col}"/>`});
+  });
+  svg.innerHTML=o;
+  if(legId){
+    document.getElementById(legId).innerHTML=series.map(s=>
+      `<span><i style="background:${C[s.key]||ink}"></i>${s.label||s.key}</span>`).join('');
+  }
+}
+
+function table(id, cols, rows, fmt){
+  const el=document.getElementById(id);
+  el.innerHTML='<thead><tr>'+cols.map(c=>`<th>${c}</th>`).join('')+
+   '</tr></thead><tbody>'+rows.map(r=>'<tr>'+r.map((v,i)=>
+   `<td>${fmt?fmt(v,i):v}</td>`).join('')+'</tr>').join('')+'</tbody>';
+}
+
+/* ---- chart 1: data efficiency ---- */
+let m1=['mahalanobis','knn','autoencoder','iforest','robust_z','gaussian_z'];
+let sel1=new Set(['mahalanobis','knn','autoencoder','iforest']);
+let proto1='e1';
+function draw1(){
+  const src=D[proto1], g=D[proto1==='e1'?'e1_global':'e2_global'];
+  const s=[...sel1].map(k=>({key:k,n:src[k].n,mean:src[k].mean,
+    lo:src[k].lo,hi:src[k].hi}));
+  if(s.length) lineChart('chart1','leg1',s,
+    {hline:g.knn,hlabel:'population k-NN (no personal data)'});
+}
+document.getElementById('c1').innerHTML=m1.map(k=>
+ `<button class="t ${sel1.has(k)?'on':''}" data-k="${k}">${k}</button>`).join('');
+document.getElementById('c1').onclick=e=>{
+  const k=e.target.dataset.k; if(!k) return;
+  sel1.has(k)?sel1.delete(k):sel1.add(k);
+  e.target.classList.toggle('on'); draw1();
+};
+document.getElementById('c1p').innerHTML=
+ `<button class="t on" data-p="e1">Protocol I: impostor</button>`+
+ `<button class="t" data-p="e2">Protocol P: amount ×5</button>`;
+document.getElementById('c1p').onclick=e=>{
+  const p=e.target.dataset.p; if(!p) return;
+  proto1=p;
+  [...e.currentTarget.children].forEach(b=>
+    b.classList.toggle('on', b.dataset.p===p));
+  draw1();
+};
+draw1();
+
+/* ---- saturation table ---- */
+table('tsat',['Model','y₀','y_max','τ','R²'],
+ D.sat.sort((a,b)=>b.r2-a.r2).map(r=>[r.model,r.y0,r.ymax,r.tau,r.r2]),
+ (v,i)=>i===4&&v<0.9?`<span class="bad">${v}</span>`:v);
+
+/* ---- operating point ---- */
+table('top',['n','Precision','Recall','F1','FPR','Flag rate'],
+ D.op.n.map((n,i)=>[n,D.op.precision[i],D.op.recall[i],D.op.f1[i],
+  D.op.fpr[i],D.op.flag_rate[i]]),
+ (v,i)=>(i===5&&v>0.5)||(i===4&&v>0.5)?`<span class="bad">${v}</span>`:
+        (i===5&&v<0.2)?`<span class="good">${v}</span>`:v);
+
+/* ---- threshold explorer ---- */
+function relThr(n,vals,f){
+  const ref=Math.max(...vals), t=f*ref;
+  for(let i=0;i<n.length;i++){
+    let ok=true;
+    for(let j=i;j<n.length;j++) if(vals[j]<t){ok=false;break}
+    if(ok) return {thr:n[i],ref:ref};
+  }
+  return {thr:null,ref:ref};
+}
+function drawThr(){
+  const f=+document.getElementById('frac').value/100;
+  document.getElementById('fracv').textContent=(f*100).toFixed(0);
+  const rows=m1.map(k=>{
+    const s=D.e1[k], r=relThr(s.n,s.mean,f);
+    const flat=(Math.max(...s.mean)-Math.min(...s.mean))<0.05;
+    return [k, r.ref.toFixed(3), r.thr===null?'—':r.thr,
+      flat?'flat curve, criterion meaningless':''];
+  }).sort((a,b)=>(a[2]==='—'?1e9:a[2])-(b[2]==='—'?1e9:b[2]));
+  table('tthr',['Model','Best observed','Threshold (txns)','Note'],rows,
+   (v,i)=>i===3&&v?`<span class="bad">${v}</span>`:v);
+}
+document.getElementById('frac').oninput=drawThr;
+drawThr();
+
+/* ---- chart 2: arms ---- */
+let arm1='mahalanobis';
+function draw2(){
+  const a=D.arms[arm1];
+  const keys=Object.keys(a).filter(k=>k!=='global'||true);
+  const s=keys.map(k=>({key:k,label:k.replace(/_/g,' '),n:a[k].n,mean:a[k].mean}));
+  lineChart('chart2','leg2',s,{});
+}
+document.getElementById('c2').innerHTML=
+ ['mahalanobis','knn'].map((k,i)=>
+  `<button class="t ${i===0?'on':''}" data-a="${k}">${k}</button>`).join('');
+document.getElementById('c2').onclick=e=>{
+  const a=e.target.dataset.a; if(!a) return;
+  arm1=a;[...e.currentTarget.children].forEach(b=>
+   b.classList.toggle('on',b.dataset.a===a)); draw2();
+};
+draw2();
+
+table('tarms',['n','Personal','Global','Paired diff','95% CI','Effect','p (Holm)'],
+ D.pvg.map(r=>[r.history_size,r.personal_mean,r.other_mean,r.paired_diff,
+  `[${r.ci_lo}, ${r.ci_hi}]`,r.effect_rank_biserial,
+  r.p_holm<0.001?'<0.001':r.p_holm]),
+ (v,i)=>i===3&&typeof v==='number'?(v<0?`<span class="bad">${v}</span>`:
+  `<span class="good">+${v}</span>`):v);
+
+/* ---- chart 3: simulation archetypes ---- */
+lineChart('chart3','leg3',Object.keys(D.sim).map(k=>
+ ({key:k,n:D.sim[k].n,mean:D.sim[k].mean})),{});
+
+table('tarch',['Archetype','Threshold (txns)','Best PR-AUC'],
+ D.archthr.sort((a,b)=>a.threshold-b.threshold)
+  .map(r=>[r.archetype,r.threshold,r.best]),
+ (v,i)=>i===1&&v>=500?`<span class="bad">${v}</span>`:
+        i===1&&v<=50?`<span class="good">${v}</span>`:v);
+
+/* ---- complexity tables ---- */
+const cr=D.complex_real.map(r=>[r.descriptor,r.spearman_rho_vs_threshold,
+  r.p_holm_vs_threshold,r.spearman_rho_vs_best_prauc]);
+const csim=D.complex_sim.map(r=>[r.descriptor,r.rho_vs_threshold,
+  r.p_holm,r.rho_vs_best]);
+table('tcomp',['Descriptor (real data)','ρ vs threshold','p (Holm)','ρ vs best'],
+ cr,(v,i)=>i===2&&v>0.05?`<span class="bad">${v}</span>`:v);
+
+/* ---- chart 4: anomaly classes ---- */
+const clsKeys=Object.keys(D.classes).filter(k=>k!=='n');
+lineChart('chart4','leg4',clsKeys.map(k=>
+ ({key:k,n:D.classes.n,mean:D.classes[k]})),
+ {ylab:'mean score percentile',y0:0.4});
+
+/* ---- temporal table ---- */
+const tt={};
+D.temporal.forEach(r=>{(tt[r.arm]=tt[r.arm]||{})[r.model]=r.pr_auc;
+ tt[r.arm].span=r.span_days});
+const order=['stride1','stride2','stride4','thin4_recent'];
+const lbl={stride1:'50 most recent',stride2:'stride 2',
+ stride4:'stride 4',thin4_recent:'thinned control (failed)'};
+table('ttemp',['Arm','Median span (days)','Mahalanobis','k-NN'],
+ order.filter(a=>tt[a]).map(a=>[lbl[a],tt[a].span,
+  tt[a].mahalanobis,tt[a].knn]));
+
+/* ---- cost table ---- */
+const cmods=Object.keys(D.cost);
+const cn=Object.keys(D.cost[cmods[0]]).map(Number).sort((a,b)=>a-b);
+table('tcost',['n'].concat(cmods),
+ cn.map(n=>[n].concat(cmods.map(m=>D.cost[m][n]))));
+
+/* ---- chart 5: protocol comparison ---- */
+let sel5=new Set(['mahalanobis','gaussian_z']);
+function draw5(){
+  const s=[];
+  [...sel5].forEach(k=>{
+    s.push({key:k,label:k+' (impostor)',n:D.e1[k].n,mean:D.e1[k].mean});
+  });
+  [...sel5].forEach(k=>{
+    s.push({key:k,label:k+' (amount ×5)',n:D.e2[k].n,mean:D.e2[k].mean});
+  });
+  lineChart('chart5','leg5',s,{});
+}
+document.getElementById('c5').innerHTML=m1.map(k=>
+ `<button class="t ${sel5.has(k)?'on':''}" data-k="${k}">${k}</button>`).join('');
+document.getElementById('c5').onclick=e=>{
+  const k=e.target.dataset.k; if(!k) return;
+  sel5.has(k)?sel5.delete(k):sel5.add(k);
+  e.target.classList.toggle('on'); draw5();
+};
+draw5();
+</script>
+</body>
+</html>

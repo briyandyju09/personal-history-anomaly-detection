@@ -1,0 +1,7 @@
+data/raw/
+*.tgz
+.venv/
+venv/
+__pycache__/
+*.pyc
+.ipynb_checkpoints/

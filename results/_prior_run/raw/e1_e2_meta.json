@@ -1,0 +1,18 @@
+{
+  "eligible_accounts": 1319,
+  "min_transactions_required": 310,
+  "n_evaluated": 300,
+  "n_donors": 400,
+  "eval_window": 60,
+  "injection_rate": 0.1,
+  "history_sizes": [
+    1,
+    5,
+    10,
+    25,
+    50,
+    100,
+    250
+  ],
+  "seed": 20260920
+}
