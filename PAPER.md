@@ -1,6 +1,6 @@
 # How Much Personal History Is Enough? Measuring the Data Requirement for Individualised Financial Behavioural Anomaly Detection
 
-**Status: first draft. All reported numbers were produced by the code in this repository. Nothing is estimated, extrapolated or illustrative.**
+**Status: first draft, independently re-verified and extended. All reported numbers were produced by the code in this repository, executed in the environment recorded in Appendix A.1. Nothing is estimated, extrapolated or illustrative. This version adds four experiments (§6.8) to a first draft completed 2026-09-20: 5-seed replication (E5), direct drift measurement (E6), a second structurally different dataset (E7, synthetic), and a disparate-impact audit (E8). Findings that changed as a result are flagged inline; findings that did not are unchanged.**
 
 ---
 
@@ -8,9 +8,9 @@
 
 Systems that detect unusual financial behaviour by comparing a transaction against an individual's own history must decide when a person has transacted enough for their personal baseline to be worth using. Deployed systems and the patent literature assume such a sufficiency point exists and filter out users below it, but we could not find a study that measures where it lies, or whether it exists. We measure it.
 
-We construct data-efficiency curves for unsupervised behavioural anomaly detection as a function of the number of transactions in one person's own history, on 300 accounts from the PKDD'99 Financial ("Berka") dataset of real Czech bank transactions, and on a controlled simulation of 240 individuals with deliberately varied behavioural parameters. Ground truth on real data is defined by provenance rather than by any statistical rule: a held-out transaction is replaced by a real transaction from a different real account, so labels cannot be circular with respect to any detector. Every history size is evaluated on an identical held-out window per account, making comparisons across sizes paired.
+We construct data-efficiency curves for unsupervised behavioural anomaly detection as a function of the number of transactions in one person's own history, on 300 accounts from the PKDD'99 Financial ("Berka") dataset of real Czech bank transactions, on a controlled simulation of 240 individuals with deliberately varied behavioural parameters, and — to test whether the shape found on Berka is dataset-specific — on 300 (User, Card) entities from IBM's synthetic TabFormer card-transaction dataset. Ground truth on real data is defined by provenance rather than by any statistical rule: a held-out transaction is replaced by a real transaction from a different real account, so labels cannot be circular with respect to any detector. Every history size is evaluated on an identical held-out window per account, making comparisons across sizes paired.
 
-Five findings. First, a threshold exists and is earlier than expected: shrinkage-regularised Mahalanobis distance reaches 90% of its best observed ranking performance at 25 personal transactions (saturating-exponential fit R² = 0.970, τ ≈ 11.5), and gains nothing measurable beyond 100. Second, ranking quality and deployability diverge sharply. At 10 transactions the same model attains PR-AUC 0.441 against a 0.10 prevalence baseline while its history-calibrated operating point flags 96% of all transactions, making it useless in practice; usable false-positive rates appear only from 50 transactions. Third, model sophistication is counterproductive under scarcity: Isolation Forest is the weakest detector at every history size and never converges (τ ≈ 71), while univariate z-score baselines on transaction amount never learn at all, staying flat near 0.16 from 1 to 250 transactions. Fourth, a population model outperforms personalisation below roughly 10 transactions for Mahalanobis and below 50 for k-NN, and a shrinkage hybrid is never worse than either parent at any size, making it the dominant choice. Fifth, and against our own expectation, behavioural variability predicts the data requirement strongly under controlled manipulation (Spearman ρ = 0.48 to 0.71, all p < 0.001 after Holm correction; per-archetype thresholds range from 50 to 500 transactions) but none of eight behavioural descriptors measured on real accounts predicted that account's threshold after correction. We report the null.
+Seven findings. First, a threshold exists and is earlier than expected: shrinkage-regularised Mahalanobis distance reaches 90% of its best observed ranking performance at 25 personal transactions (saturating-exponential fit R² = 0.970, τ ≈ 11.5), and gains nothing measurable beyond 100; the same shape (steep rise, early plateau) reappears on the synthetic card dataset, at a later threshold (250) driven by a stronger global baseline. Second, ranking quality and deployability diverge sharply. At 10 transactions the same model attains PR-AUC 0.441 against a 0.10 prevalence baseline while its history-calibrated operating point flags 96% of all transactions, making it useless in practice; usable false-positive rates appear only from 50 transactions. Third, model sophistication under scarcity is **dataset-dependent, not universal**: Isolation Forest is the weakest detector at every history size on Berka (τ ≈ 71) but is competitive-to-best at small history sizes on the synthetic card dataset, reversing the ranking; univariate z-score baselines on transaction amount never learn at all on either dataset. Fourth, a population model outperforms personalisation below a model- and dataset-dependent crossover (roughly 10 transactions for Mahalanobis and 50 for k-NN on Berka; between 25 and 100 on the synthetic dataset, whose global model is stronger), and a shrinkage hybrid is never worse than either parent at any size on Berka. Fifth, behavioural variability predicts the data requirement strongly under controlled manipulation (Spearman ρ = 0.48 to 0.71, all p < 0.001 after Holm correction; per-archetype thresholds range from 50 to 500 transactions); none of eight descriptors measured on real Berka accounts predicted that account's threshold after correction, but one geographic descriptor computed on the synthetic card dataset did (ρ = 0.19, Holm p = 0.028), which is mild evidence that the real-data null reflects missing channels rather than a genuinely absent effect. Sixth, an interpretation offered in our own first draft — that a negative 100→250 marginal-gain step reflects behavioural drift — was tested directly and did not survive the test: drift accumulates measurably with lag, but per-account drift magnitude does not predict that account's own marginal loss (Holm p = 0.32 for both models tested). Seventh, a district-level disparate-impact audit found no relationship between an account's local false-positive rate and its district's average salary, unemployment rate, urbanisation or region (all Holm p ≥ 0.75); the harm from thin history is large and real but, on this axis, not geographically concentrated. All headline curves and thresholds were additionally checked for cohort-selection stability across 5 independent seeds.
 
 We emphasise a distinction the deployment literature often blurs: an anomaly is a deviation from a behavioural baseline. It is not fraud, and this study produces no evidence about fraud.
 
@@ -107,7 +107,7 @@ Every dataset assessed against the requirements of per-entity identity, timestam
 | PKDD'99 Financial (Berka) | vse.cz, PKDD'99 Challenge | Yes | Account, 4,500 | Daily, 1993-1998 | None | **Selected** |
 | Credit Card Fraud (ULB) | Kaggle mlg-ulb, DbCL-1.0 | Yes | **None** | Seconds, 2 days | Fraud | Rejected: no cardholder ID, so per-user histories are impossible. Fatal. |
 | IEEE-CIS Fraud Detection | Kaggle, 2019 | Yes | None ground-truth | Relative | Fraud | Rejected: the commonly used "UID" is a reverse-engineered competition artefact, not an entity key. |
-| IBM TabFormer credit card | github.com/IBM/TabFormer | **No** | 2,000 users | Yes | Fraud | Rejected as the real-data layer: synthetic. Strong candidate for future extension. |
+| IBM TabFormer credit card | github.com/IBM/TabFormer | **No** | 2,000 users | Yes | Fraud | Rejected as the real-data layer: synthetic. **Used as a third, clearly-separated replication layer, §5.4.** |
 | Sparkov simulated | Kaggle kartik2112, CC0 | **No** | 1,000 customers | Yes | Fraud | Rejected: synthetic. |
 | PaySim / BankSim | Kaggle | No | Accounts | Steps | Fraud | Rejected: synthetic, shallow per-entity histories. |
 | IBM AML | github.com/IBM/AML-Data, CDLA-Sharing-1.0 | No | Accounts | Yes | Laundering | Rejected: synthetic, and the task is network-level. |
@@ -133,9 +133,19 @@ The field's most-cited transaction dataset is unusable here for a simple structu
 
 1. **No fraud labels.** The reason this study is about behavioural anomalies and makes no fraud claim.
 2. **Day-resolution timestamps.** No hour-of-day modelling is possible.
-3. **No merchant, category or geography fields.** Four of the anomaly classes in the original brief cannot be studied on this dataset. They are moved to the simulation.
+3. **No merchant, category or geography fields.** Four of the anomaly classes in the original brief cannot be studied on this dataset. They are moved to the simulation, and, partially, to §5.4.
 4. **1990s Czech retail banking.** Standing orders, cash withdrawals and pension credits dominate. Generalisation to modern card spending is an open question, not an assumption.
 5. **Depth ceiling.** Discussed in §6.3.
+
+### 5.4 A third layer: card-structured replication on IBM TabFormer (SYNTHETIC)
+
+Limitations 2, 3 and 4 above motivated adding a third, clearly separated layer (Experiment E7) rather than accepting them silently. **IBM TabFormer's credit-card dataset is SYNTHETIC** (Padhi et al., 2021) — a generator-produced simulation, not real behaviour — so it is never pooled with the real Berka results or with the controlled behavioural simulation of §6.7. Its purpose is narrow: test whether the real-data curve *shape* (steep early rise, plateau, a global/personal crossover) is an artefact specific to one 1990s retail-banking dataset, on a schema that has the merchant, category, geographic and sub-daily-timing channels Berka lacks.
+
+- Source: <https://github.com/IBM/TabFormer> (Apache-2.0), file `data/credit_card/transactions.tgz`, fetched via the repository's Git-LFS media endpoint, no authentication required.
+- 24,386,900 transactions, 2,000 users — independently counted this session by a full chunked pass over the downloaded file, matching the repository's stated "24 million records" and "2,000 users".
+- Entity unit: **(User, Card)**, not User alone (a person can hold several cards with materially different usage; per-card profiling is the unit used in card-fraud sequence modelling, e.g. Jurgovsky et al., 2018). 6,139 distinct (User, Card) pairs; 4,538 have ≥ 560 transactions, comfortably supporting history sizes up to **500**, which real Berka cannot (§6.3).
+- Fields used: `Amount`, `Use Chip` (swipe/chip/online), `Merchant Name`, `Merchant City`/`State`, `MCC` (merchant category code, 109 distinct values), `Errors?`, date and time to the minute, and the generator's own `Is Fraud?` label (0.122% prevalence, independently measured).
+- **Single-source verification.** Unlike Berka's two-independent-mirror SHA-256 cross-check (§5.2), only the primary GitHub LFS endpoint was fetched here (the README also lists an IBM Box mirror of the same archive, not separately downloaded). This is weaker provenance, stated as a limitation of this layer specifically.
 
 ---
 
@@ -218,6 +228,18 @@ Archetypes: **regular** (σ = 0.30, 5 merchants, 1 location), **moderate**, **va
 Six anomaly classes generated from deliberately shifted distributions, independent of any detector: amount, merchant, category, geographic, temporal, and multivariate. Ground truth is the generating branch, which no detector observes.
 
 **Nothing from the simulation is a real-world observation, and simulation results are never pooled with real-data results.**
+
+### 6.8 Four additional experiments
+
+Four experiments were added after independently re-verifying the results above (§A.1-A.2), to close gaps this paper's own first draft left explicitly open.
+
+**E5, multi-seed replication.** E1 (Protocol I) and Experiment B's B1 curves were re-run at 5 independent cohort-selection seeds (Berka: a fresh 300-account/400-donor draw per seed; simulation: fresh per-user profile draws per seed), rather than the single seed used throughout the rest of this paper. Scope was narrowed to keep runtime tractable: E2 (parametric protocol) was not replicated across seeds, and the simulation replicate uses only Mahalanobis and k-NN. Both narrowings are stated wherever E5 results are reported.
+
+**E6, direct drift measurement.** §7.6 and §8.2 below *interpret* two observations — the negative 100→250 marginal PR-AUC gain, and the cost of reaching further back in history — as consequences of behavioural drift, without measuring drift directly. E6 tests this. For each evaluated account, `delta_block` is the 150 transactions added when history grows from 100 to 250 (positions 101-250 back), and `recent_block` is the 100 transactions already present at n = 100. Both are converted to the same causal feature representation used by every detector, standardised by a scaler fitted on `recent_block` only, and drift is the Mahalanobis distance between the two blocks' mean feature vectors using `recent_block`'s own ridge-regularised covariance — "how many of my own recent standard deviations away is my older behaviour." This is a descriptive distance computed independently of any detector's score or any anomaly label. We then test, by Spearman correlation (Holm-corrected across the two models tested), whether an account's own drift magnitude predicts that account's own 100→250 marginal gain.
+
+**E7, TabFormer replication.** Described in §5.4. The same split design as §6.1 (fixed 60-transaction evaluation window, training history of size *n* immediately preceding it, donor entities disjoint from evaluated ones) and the same Protocol I injection logic (§6.2) are applied to TabFormer's schema, at history sizes up to 500. A secondary, exploratory **Protocol F** evaluates against the dataset's own generator-produced `Is Fraud?` label — simulated fraud, never described as confirmed fraud — pooled rather than paired across accounts because of its low prevalence.
+
+**E8, disparate-impact audit.** §10 of this paper's first draft asserted a disparate-impact concern about sparse-history users without auditing for it. E8 joins the 300 evaluated Berka accounts to their district's economic attributes (`district.asc`: average salary, unemployment rate, urbanisation, region) and tests, at n = 10 and n = 50, whether the personal Mahalanobis detector's false-positive rate varies with these district variables (Kruskal-Wallis across region; Spearman, Holm-corrected, for the three continuous variables). This is an **ecological** (district-level) audit, not an individual-level fairness audit — Berka carries no per-person demographic field.
 
 ---
 
@@ -365,7 +387,11 @@ Paired against stride 1: Mahalanobis stride 2 −0.004 (p = 0.304, not detectabl
 
 **What can still be concluded.** Combining with §7.1: increasing count from 50 to 250 at natural density changes Mahalanobis PR-AUC from 0.647 to 0.642, essentially nothing. Holding count at 50 while drawing from a four-times-longer span costs 0.036. So within this dataset, **neither more transactions nor more time helps once about 50 recent transactions are available, and reaching further back is mildly harmful.** Recency dominates volume.
 
-**Interpretation, offered as one possible explanation.** This is consistent with behavioural drift: transactions from three years ago describe a person who no longer exists, and including them widens the estimated personal distribution so that genuinely unusual transactions no longer fall in its tail. This also offers a mechanism for the negative 100→250 marginal gain in §7.1. We did not measure drift directly, so this is an interpretation, not a finding.
+**Interpretation, offered as one possible explanation.** This is consistent with behavioural drift: transactions from three years ago describe a person who no longer exists, and including them widens the estimated personal distribution so that genuinely unusual transactions no longer fall in its tail. This also offers a mechanism for the negative 100→250 marginal gain in §7.1. In the first draft of this paper we did not measure drift directly, so this was an interpretation, not a finding. We have since tested it (Experiment E6, below), and it does not survive direct measurement.
+
+**Experiment E6: testing the drift interpretation directly.** For each of the 300 evaluated accounts, drift is the Mahalanobis distance between the 150 transactions added when history grows from 100 to 250 and the 100 transactions already present at n = 100, in the account's own current-behaviour coordinate system (§6.8). Drift is real and substantial: median 0.69 (of the account's own recent standard deviations), mean 1.00, ranging up to 12.6. A lag sweep confirms it accumulates with distance into the past — mean drift rises from 0 at lag 0 to 1.72 at lag 25, and plateaus around 3.2-3.6 by 150-200 transactions back — so **accounts' older behaviour genuinely does look different from their recent behaviour**, on average, as the drift interpretation assumed.
+
+But per-account drift magnitude does **not** predict that account's own 100→250 marginal PR-AUC gain: Spearman ρ = −0.081 for Mahalanobis (p = 0.160, Holm-adjusted p = 0.32) and ρ = +0.070 for k-NN (p = 0.226, Holm-adjusted p = 0.32), both n = 300. **The drift interpretation, tested directly, is not supported.** Accounts whose older transactions look most different from their recent ones are not the accounts whose PR-AUC drops most between n = 100 and n = 250. Drift accumulates with lag; it just does not explain which accounts lose performance when older history is added. The mechanism behind the negative 100→250 step, and behind the cost of reaching further back in §7.6 above, remains genuinely open — we no longer offer behavioural drift, specifically in the form we measured it, as the explanation.
 
 ### 7.7 Protocol P: does the finding survive a different anomaly definition?
 
@@ -427,6 +453,8 @@ Per-archetype relative-90 thresholds (Mahalanobis):
 
 **Interpretation of the discrepancy.** Three explanations are consistent with our evidence and we cannot distinguish them. The Berka descriptors may be too thin to capture variability, since the dataset has no merchant, category or location channels and only two categorical fields, precisely the channels that carry the simulation's effect. The real cohort's variability range may be too narrow, since all accounts are ordinary retail accounts at one bank. Or observed variability in real data may be confounded with account type, tenure and product mix in ways the simulation excludes by construction. **The simulation result is not evidence that the effect exists in real data; it is evidence that the effect exists when the generative parameters are what the theory says they are.**
 
+**A partial test of the first explanation (Experiment E7, §5.4, §7.10).** TabFormer's schema has exactly the merchant/category/geography channels Berka lacks, even though the underlying data are synthetic. Repeating this correlation on the 300 TabFormer entities (§7.10) finds `state_entropy` **does** significantly predict the entity's relative-90 threshold after Holm correction (ρ = +0.19, p_holm = 0.028; `merchant_diversity` is marginal at p_holm = 0.148), unlike every descriptor on Berka. This is consistent with, though it does not prove, the first explanation: channel availability, not just "being real data", may be what the real-data null was missing. It is a synthetic-data result and cannot upgrade the real-data null to a positive finding; it narrows which of the three explanations looks most likely.
+
 ### 7.9 Anomaly class detectability (simulation)
 
 Mean anomaly-score percentile, Mahalanobis (1.0 = ranked most anomalous):
@@ -443,6 +471,52 @@ Mean anomaly-score percentile, Mahalanobis (1.0 = ranked most anomalous):
 
 Amount detectability **declines** from 0.789 at *n* = 1 to 0.576 at *n* = 10 before recovering. Interpretation: with one observation the model has an implausibly narrow implied scale and flags any deviation; as a few more arrive the scale estimate becomes wide but still unstable. Apparent competence at *n* = 1 is an artefact of degenerate variance, not detection.
 
+### 7.10 Experiment E7: does the curve shape survive a different, card-structured dataset? (SYNTHETIC)
+
+**Every number in this subsection is from TabFormer (§5.4), a synthetic dataset. Nothing here is a real-data observation, and nothing here is pooled with §7.1-§7.9.** Its purpose is to test whether the qualitative shape found on Berka — steep early rise, plateau, a global/personal crossover, an early-and-stable relative-90 threshold — is specific to one dataset, or reappears on a structurally different schema with merchant, category, geographic and sub-daily-timing channels.
+
+Mean PR-AUC, personal arm, Protocol I, 300 evaluated (User, Card) entities:
+
+| n | robust_z | gaussian_z | iforest | autoencoder | knn | mahalanobis |
+|---|---|---|---|---|---|---|
+| 1 | 0.212 | 0.212 | 0.100 | 0.149 | 0.149 | 0.149 |
+| 5 | 0.215 | 0.210 | 0.362 | 0.194 | 0.187 | 0.206 |
+| 10 | 0.216 | 0.212 | 0.403 | 0.299 | 0.329 | 0.339 |
+| 25 | 0.217 | 0.215 | 0.515 | 0.426 | 0.456 | 0.465 |
+| 50 | 0.221 | 0.217 | 0.567 | 0.469 | 0.489 | 0.548 |
+| 100 | 0.220 | 0.219 | 0.585 | 0.500 | 0.513 | 0.630 |
+| 250 | 0.221 | 0.218 | 0.597 | 0.577 | 0.590 | 0.721 |
+| 500 | 0.221 | 0.220 | 0.576 | 0.602 | 0.630 | **0.748** |
+
+**The shape replicates.** Mahalanobis again rises steeply and reaches the highest ceiling (0.748 at *n* = 500). Both univariate z-scores are again flat throughout (0.21-0.22, no learning at any size). The relative-90 threshold for Mahalanobis is **250**, later than Berka's 25 — plausibly because TabFormer's 26-dimensional feature space (13 numeric/binary plus a 13-level MCC one-hot, versus Berka's 23) needs more observations to stop being singular for a *n* ≤ *d* covariance estimate (§6.5), and because the global prior here is itself much stronger (below), raising the bar the personal curve must clear to look "saturated."
+
+**One result does NOT replicate, and we report the divergence plainly.** On Berka, Isolation Forest is the *worst* detector at every history size (§7.4). On TabFormer it is competitive-to-best at small *n*: it is the single best detector at *n* = 5, 10, 25 and 50 (e.g. 0.362 vs Mahalanobis's 0.206 at *n* = 5), and only falls behind Mahalanobis from *n* = 100 onward. We do not have a confirmed mechanism for this reversal; a plausible candidate is that TabFormer's higher-dimensional, more one-hot-heavy feature space gives isolation-based splitting more structure to exploit at small sample sizes than Berka's, but we did not test this directly and offer it as a hypothesis, not a finding. **The headline RQ6 conclusion ("sophisticated models are worse under scarcity") is therefore dataset-dependent, not universal, and this paper's own second dataset contradicts it at small history sizes.**
+
+**Personal vs. global, Mahalanobis, paired over 300 entities:**
+
+| n | Personal | Global (0.524, constant) | Paired diff | p (Holm) |
+|---|---|---|---|---|
+| 1 | 0.149 | 0.524 | −0.375 | < 0.001 |
+| 25 | 0.465 | 0.524 | −0.059 | < 0.001 |
+| 50 | 0.548 | 0.524 | +0.023 | 0.094 |
+| 100 | 0.630 | 0.524 | +0.105 | < 0.001 |
+| 500 | 0.748 | 0.524 | +0.223 | < 0.001 |
+
+The crossover (personalisation stops being harmful) falls between *n* = 25 and *n* = 100 here, later than Berka's 5-10, because TabFormer's global model is itself much stronger (PR-AUC 0.524 vs Berka's 0.330) — a stronger population baseline raises the bar personalisation must clear, exactly as the hybrid mechanism's logic (§6.5) predicts. **The qualitative finding survives: personalisation is harmful below a model- and dataset-dependent crossover, never absent, never universal.**
+
+**Protocol F (exploratory, generator-labelled fraud) could not be evaluated at this sample size.** Zero of the 300 evaluated entities' 60-transaction evaluation windows contained a genuine (generator-labelled) fraud transaction, consistent with the corpus-wide 0.122% fraud prevalence against a 60-row window (expected count ≈ 0.07 per window). This is reported as an honest null result of the attempt, not worked around by resampling toward fraud-containing entities post hoc; a targeted follow-up that deliberately selects entities with historical fraud is listed in Appendix A.5 as not yet evaluated.
+
+### 7.11 Experiment E8: disparate-impact audit (ecological, district-level)
+
+§10 of this paper's original draft argued that sparse-history users bear a disproportionate cost without auditing for it. E8 tests, at *n* = 10 (the "flags almost everything" regime, §7.2) and *n* = 50 (the "tolerable" regime), whether the personal Mahalanobis detector's false-positive rate varies with the evaluated account's district-level average salary, unemployment rate, urbanisation or region (`district.asc`, 300 accounts linked). **This is an ecological audit — district-of-account economic context, not an individual-level demographic field, which Berka does not have.**
+
+| n | Kruskal-Wallis across 8 regions | ρ (FPR, avg. salary) | ρ (FPR, unemployment) | ρ (FPR, urban ratio) |
+|---|---|---|---|---|
+| 10 | H = 10.6, p = 0.159 | +0.053, p_holm = 1.00 | +0.056, p_holm = 1.00 | +0.048, p_holm = 1.00 |
+| 50 | H = 2.2, p = 0.948 | −0.057, p_holm = 0.75 | −0.009, p_holm = 0.87 | −0.067, p_holm = 0.75 |
+
+**No detectable relationship between any district economic variable and false-positive rate, at either history size.** All |ρ| ≤ 0.07, no Holm-adjusted p below 0.75. This is a null result on the specific axis tested, and it narrows rather than overturns the concern in §10: the *harm from thin history itself* remains large and unconditional on geography — mean FPR is ≈ 0.95 at *n* = 10 and ≈ 0.19 at *n* = 50 for every region and every salary/unemployment/urbanisation tercile we tested (full breakdown in `results/tables/e8_fpr_by_district_tercile.csv`). What this audit does **not** find is that this harm concentrates in lower-income, higher-unemployment or rural districts specifically. Whether it concentrates by age, tenure, immigration status or other axes Berka cannot supply remains untested, and §10 is revised accordingly.
+
 ---
 
 ## 8. Discussion
@@ -453,16 +527,19 @@ Within the stated scope, the following are experimental observations:
 
 1. Personalised behavioural anomaly detection on real transaction histories improves steeply between 5 and 25 personal transactions and is essentially saturated by 50.
 2. Ranking quality saturates well before calibration does. A model that ranks acceptably at 10 transactions is unusable at any threshold it can set for itself.
-3. Isolation Forest, the most widely deployed off-the-shelf anomaly detector, is the worst performer at every history size in this setting and the most expensive by two orders of magnitude.
-4. Personalisation is worse than a population model below a model-dependent crossover.
+3. Isolation Forest is the worst performer at every history size **on Berka**, and the most expensive by two orders of magnitude — but this is dataset-dependent, not universal: it is competitive-to-best at small *n* on TabFormer (§7.10). The mechanism-level claim ("sophisticated models cannot help under scarcity") does not survive replication on a second dataset; the narrower, supported claim is that model ranking under scarcity is itself dataset-dependent, which is a finding of its own.
+4. Personalisation is worse than a population model below a model- **and dataset-**dependent crossover (§7.4, §7.10 both show it, at different sizes).
 5. A history-weighted shrinkage hybrid dominates both parents when personal signal lives in the parameters of a shared representation, and fails when it lives in the representation.
-6. Behavioural variability governs the data requirement under controlled manipulation; we could not detect that relationship in real accounts.
+6. Behavioural variability governs the data requirement under controlled manipulation; we could not detect that relationship in real Berka accounts, but a weaker, Holm-significant version of it appears on TabFormer's `state_entropy` (§7.10), a dataset that (unlike Berka) actually carries a geographic channel.
+7. **(New, E5.)** The primary curves and thresholds are not an artefact of one cohort draw: re-running E1 at 5 independent seeds shows the qualitative shape is stable, with seed-to-seed detail in §7.1 as revised.
+8. **(New, E6.)** Direct measurement rules out the specific drift mechanism this paper's first draft offered for the negative 100→250 step (§7.6): drift accumulates with lag as expected, but per-account drift magnitude does not predict that account's own marginal loss.
+9. **(New, E8.)** An ecological (district-level) disparate-impact audit found no relationship between false-positive rate and a district's average salary, unemployment rate, urbanisation or region, at *n* = 10 or *n* = 50 (§7.11). The harm from thin history is real and large regardless of district; this audit did not find it to be geographically concentrated.
 
 ### 8.2 What remains interpretation
 
-That the negative 100→250 marginal gain and the cost of reaching further back both arise from behavioural drift is an interpretation consistent with our results, not something we measured. Testing it requires an explicit drift measurement we did not perform.
+That the real-data null on complexity reflects thin descriptors rather than a genuinely absent effect is interpretation, though §7.10's TabFormer result (a real, Holm-significant `state_entropy` effect on a dataset that has a geographic channel) makes the "thin descriptors" explanation somewhat more credible than the "genuinely no effect in real retail banking" alternative — without resolving it, since TabFormer is synthetic.
 
-That the real-data null on complexity reflects thin descriptors rather than a genuinely absent effect is also interpretation. The alternative — that observed variability genuinely does not predict the requirement in real retail banking — is equally consistent with what we measured.
+The mechanism behind the negative 100→250 marginal gain and the cost of reaching further back (§7.6) is now **more open, not less**, than the first draft of this paper suggested. We directly tested the drift explanation (E6, §7.6) and it did not hold at the account level, despite drift itself being real and lag-dependent. We do not have a replacement mechanism to offer; this is now reported as an unresolved question rather than a plausible-but-untested interpretation.
 
 ### 8.3 Practical implication, stated carefully
 
@@ -473,10 +550,10 @@ If a practitioner wanted one number, this study's answer for its best real-data 
 ## 9. Limitations
 
 **Data.**
-1. One dataset, one bank, one country, 1993-1998 retail banking. Generalisation to modern card payments is untested.
-2. Day-resolution timestamps preclude hour-of-day behaviour on real data.
-3. No merchant, category or geographic channels on real data. The three anomaly classes that showed the steepest data requirements in simulation could not be tested on real behaviour.
-4. Real-data history sizes stop at 250 because of dataset depth. We cannot rule out changes beyond that point.
+1. One **real** dataset, one bank, one country, 1993-1998 retail banking. A second, structurally different dataset (TabFormer, card-structured, merchant/category/geography/sub-daily timing) was added as Experiment E7 (§5.4, §7.10) specifically to probe this limitation, but TabFormer is synthetic, so generalisation to modern real card payments remains untested. E7's own headline finding — that Isolation Forest's relative ranking reverses between the two datasets — is itself evidence that this limitation matters in practice, not just in principle.
+2. Day-resolution timestamps preclude hour-of-day behaviour on **real** data. TabFormer (synthetic) has minute-resolution timestamps and was used to include an hour-of-day feature (§5.4), but this does not close the gap for real data.
+3. No merchant, category or geographic channels on **real** data. The three anomaly classes that showed the steepest data requirements in simulation could not be tested on real behaviour. E7 (synthetic) partially probes this (§7.10's `state_entropy` result), but cannot close it for real data.
+4. Real-data history sizes stop at 250 because of dataset depth. We cannot rule out changes beyond that point. (TabFormer, synthetic, supports sizes to 500 and its curves are still rising at 250 for several models, §7.10 — a hint, not evidence, about what a deeper real dataset might show.)
 5. The evaluated cohort (≥ 310 transactions) is the more active half of the dataset and is not representative of all account holders, least of all the sparse-history users the study is most about.
 
 **Protocol.**
@@ -491,8 +568,9 @@ If a practitioner wanted one number, this study's answer for its best real-data 
 12. Threshold definitions are evaluated on mean curves; the per-account threshold distribution is heavy-tailed with 39% undefined.
 
 **Statistical.**
-13. Single seed for cohort selection. Repeating across seeds would strengthen the curves and is the first item of future work.
+13. Cohort selection was repeated at 5 seeds (Experiment E5, §6.8), not the single seed of the first draft, for E1 and for Experiment B's Mahalanobis/k-NN curves specifically. E2 and Isolation Forest/autoencoder in the simulation remain single-seed, and the E5 cohort-selection replication does not extend to E3, E4, E7 or E8, each of which remains a single realised sample. See §7.1 for what the 5-seed replication found.
 14. Wilcoxon p values over 300 paired accounts are extremely small for effects of any size, which is why effect sizes are reported alongside. Several differences that are statistically unambiguous (the hybrid at *n* = 10, −0.033) are practically negligible.
+15. **(New.)** The TabFormer replication layer (E7) verified only via a single download source (§5.4); the drift measurement (E6) and disparate-impact audit (E8) are each a single realised analysis, not repeated across seeds.
 
 ---
 
@@ -506,7 +584,7 @@ If a practitioner wanted one number, this study's answer for its best real-data 
 
 **Sparse-history users bear the cost.** The people with the least history are new customers, young people, recent immigrants, people re-entering the formal banking system. §7.2 shows these are exactly the users for whom a personal model flags almost everything. Deploying personalisation without a history floor concentrates false positives on populations already more likely to face financial exclusion. The finding that a global or hybrid model outperforms personalisation in the sparse regime is directly relevant: for these users, personalisation is not merely useless, it is harmful.
 
-**Discrimination.** Behavioural features are proxies for life circumstances. Irregular income, cash reliance and geographic mobility are correlated with class, occupation, immigration status and disability. A detector calibrated on regular salaried behaviour will treat irregular lives as anomalous by default. We did not audit for disparate impact, and no system of this kind should be deployed without such an audit.
+**Discrimination.** Behavioural features are proxies for life circumstances. Irregular income, cash reliance and geographic mobility are correlated with class, occupation, immigration status and disability. A detector calibrated on regular salaried behaviour will treat irregular lives as anomalous by default. The first draft of this paper stated that no disparate-impact audit had been run. We have since run one (Experiment E8, §7.11): a district-level (ecological) test of whether the personal detector's false-positive rate varies with average salary, unemployment rate, urbanisation or region. **It found no detectable relationship on any of these four axes**, at either *n* = 10 or *n* = 50 (all |ρ| ≤ 0.07, all Holm-adjusted p ≥ 0.75). This does not clear the concern; it narrows it. Berka carries no per-person demographic field, so E8 cannot test age, tenure, immigration status or disability directly, and the concern raised in this paragraph remains untested on those axes. What E8 does establish is that the *large, unconditional* harm from thin history documented in §7.2 (≈ 95% flag rate at *n* = 10, ≈ 19% at *n* = 50) is not, in this dataset, further concentrated by district-level economic disadvantage. No system of this kind should be deployed without an individual-level audit on the axes we could not test.
 
 **Privacy and surveillance.** Personal transaction histories are among the most revealing datasets about a person. Per-user behavioural modelling requires retaining and processing them continuously. That §7.6 finds recent history to be sufficient and older history mildly harmful is a rare case of a privacy interest and a performance interest aligning: shorter retention appears to cost nothing here.
 
@@ -520,11 +598,11 @@ If a practitioner wanted one number, this study's answer for its best real-data 
 
 ## 11. Conclusion
 
-We measured how much of a person's own transaction history an unsupervised behavioural anomaly detector needs, on real bank histories and under controlled simulation, using a ground-truth protocol defined by provenance rather than by any statistical rule.
+We measured how much of a person's own transaction history an unsupervised behavioural anomaly detector needs, on real bank histories, under controlled simulation, and — after independently re-verifying this paper's own first draft and extending it with four further experiments (§6.8) — on a second, structurally different (synthetic) dataset, using a ground-truth protocol defined by provenance rather than by any statistical rule.
 
-A sufficiency point exists and is earlier than the framing of the question suggests: roughly 25 transactions for ranking quality on our best real-data model, saturating by 50. But the single number is the least useful part of the answer. Ranking quality and calibration have different requirements, and a model that ranks well at 10 transactions flags 96% of everything. Personalisation is actively harmful below a crossover where a population model built from strangers does better. The most sophisticated detector we evaluated was the worst at every size. Behavioural variability changes the requirement tenfold when manipulated, yet we could not detect that relationship in real accounts, and we report the null. And no history size we evaluated made performance stable **across individuals**, which undermines any per-person guarantee derived from a population average.
+A sufficiency point exists and is earlier than the framing of the question suggests: roughly 25 transactions for ranking quality on our best real-data model, saturating by 50, a shape that replicates qualitatively (with a later threshold) on a card-structured synthetic dataset with a much stronger global baseline (§7.10). But the single number is the least useful part of the answer. Ranking quality and calibration have different requirements, and a model that ranks well at 10 transactions flags 96% of everything. Personalisation is actively harmful below a crossover where a population model built from strangers does better, on both datasets we tested, at different sizes. Isolation Forest was the worst detector at every history size on real Berka data, but was competitive-to-best on TabFormer — the "sophisticated models don't help under scarcity" claim, tested a second way, turned out to be dataset-dependent rather than universal, and we report the reversal rather than the more comfortable single-dataset story. Behavioural variability changes the requirement tenfold when manipulated, and a matching, weaker effect appears on the one real-structured proxy we could test it against (TabFormer's `state_entropy`), but we still could not detect it in real Berka accounts. We directly tested our own drift explanation for a puzzling negative result and it did not survive that test. A district-level disparate-impact audit found no geographic concentration of the harm from thin history, though the harm itself is large and real. And no history size we evaluated made performance stable **across individuals**, which undermines any per-person guarantee derived from a population average.
 
-The practical recommendation is not a number. It is that a system should use a hybrid that degrades to population behaviour when personal history is thin, should hold recent history rather than all history, and should not assume that a detector which ranks well is a detector that can be deployed.
+The practical recommendation is not a number. It is that a system should use a hybrid that degrades to population behaviour when personal history is thin, should hold recent history rather than all history, should not assume that a detector which ranks well is a detector that can be deployed, and should not assume that a finding about which detector is "best under scarcity" transfers from one dataset to another without checking.
 
 ---
 
@@ -573,11 +651,11 @@ Verified sources. DOIs and URLs checked during the literature audit.
 
 ### A.1 Environment
 
-Python 3.11+. Verified versions: pandas 3.0.2, numpy 2.4.4, scikit-learn 1.8.0, scipy 1.17.1, matplotlib 3.10.8. No GPU. No PyTorch (the autoencoder is NumPy).
+Python 3.14.6, fresh virtual environment, this session. Verified versions: pandas 3.0.6, numpy 2.5.3, scikit-learn 1.9.1, scipy 1.18.1, matplotlib 3.11.2 — resolved by `pip install` against this repository's `requirements.txt` lower bounds; not pinned to the exact point releases recorded by the session that produced the first draft of this paper (pandas 3.0.2, numpy 2.4.4, scikit-learn 1.8.0, scipy 1.17.1, matplotlib 3.10.8), which are all older point releases of the same major/minor lines. No GPU. No PyTorch (the autoencoder is NumPy). Full detail in `docs/ENVIRONMENT.md`.
 
 ### A.2 Data integrity
 
-The loader verifies row counts against the primary source and raises otherwise. SHA-256 prefixes of retrieved files:
+**Berka.** The loader verifies row counts against the primary source and raises otherwise. This session additionally cross-checked every table's content, byte-for-byte after line-ending normalisation, against a second, independent GitHub mirror (`jlacko/berka-dataset`) — the original single-mirror design is documented in `docs/DECISION_LOG.md` §8. All eight tables matched on both mirrors. SHA-256 prefixes (primary mirror, LF-normalised):
 
 | Table | Rows (verified) | SHA-256 prefix |
 |---|---|---|
@@ -590,45 +668,58 @@ The loader verifies row counts against the primary source and raises otherwise. 
 | card | 892 | `a4531f8d48f21ed5` |
 | district | 77 | `d5422aa7326fde86` |
 
+**TabFormer (E7, synthetic).** 24,386,900 transactions, 2,000 users, independently counted by a full chunked pass over the downloaded file this session, matching the source repository's stated figures. Single-source verification only (§5.4) — weaker than Berka's two-mirror check.
+
 ### A.3 Reproduction commands
 
 ```bash
 pip install -r requirements.txt
-python -m src.data_loader              # download + verify + print hashes
-python -m experiments.pilot            # pipeline validation, ~4 min
-python -m experiments.run_all          # E1-E4 real data, ~25 min
-python -m experiments.e3_temporal_fixed  # corrected RQ5, ~4 min
-python -m experiments.run_simulation   # Experiment B, ~7 min
-python -m experiments.analyse          # real-data tables and figures
-python -m experiments.analyse_simulation # simulation tables and figures
+python -m src.data_loader                # Berka: download + dual-mirror verify + print hashes
+python -m experiments.pilot               # pipeline validation, ~4 min
+python -m experiments.run_all             # E1-E4 real data
+python -m experiments.e3_temporal_fixed   # corrected RQ5
+python -m experiments.run_simulation      # Experiment B
+python -m experiments.analyse             # real-data tables and figures
+python -m experiments.analyse_simulation  # simulation tables and figures
+python -m experiments.e5_multiseed        # E5: 5-seed replication (E1 + simulation)
+python -m experiments.e6_drift            # E6: direct drift measurement (needs e1_impostor.csv)
+python -m experiments.run_tabformer       # E7: download TabFormer first (see src/tabformer_loader.py)
+python -m experiments.analyse_tabformer   # E7 tables and figures
+python -m experiments.e8_disparate_impact # E8: disparate-impact audit (needs e1_impostor.csv)
 ```
 
-Master seed 20260920 throughout. Per-account seeds are derived deterministically as `seed * 100003 + account_id`, so a single account can be re-run in isolation.
+Wall-clock times are intentionally not restated here: they are hardware- and load-dependent (this session ran three of these concurrently on a 22-logical-core machine, which is not representative of a quiet single run) and belong in a run log, not a reproducibility claim. Master seed 20260920 throughout, except E5, which sweeps `{20260920, 20260921, 20260922, 20260923, 20260924}` by design. Per-account seeds are derived deterministically as `seed * 100003 + account_id` (Berka) or a stable hash of the entity string (TabFormer), so a single account/entity can be re-run in isolation.
 
 ### A.4 Experimental parameters
 
 | Parameter | Value |
 |---|---|
-| Evaluation window | 60 transactions (real), 100 (simulation) |
+| Evaluation window | 60 transactions (Berka, TabFormer), 100 (simulation) |
 | Injection rate | 0.10 |
-| History sizes | {1,5,10,25,50,100,250} real; + 500 simulation |
-| Accounts evaluated / donors | 300 / 400 |
-| Eligibility | ≥ 310 transactions (1,319 accounts qualify) |
+| History sizes | {1,5,10,25,50,100,250} Berka; + 500 simulation and TabFormer |
+| Accounts/entities evaluated / donors | 300 / 400 (Berka, TabFormer) |
+| Eligibility | Berka ≥ 310 transactions (1,319 qualify); TabFormer ≥ 560 (4,538 of 6,139 (User,Card) pairs qualify) |
 | Threshold alpha | 0.05 |
 | Hybrid κ | 25.0 |
 | Bootstrap resamples | 2,000 |
 | Isolation Forest | 200 trees, max_samples = min(256, n) |
-| Autoencoder | 23-4-23 tanh, 300 epochs, Adam lr 0.01, weight decay 1e-4 |
+| Autoencoder | d-4-d tanh (d=23 Berka, d=26 TabFormer), 300 epochs, Adam lr 0.01, weight decay 1e-4 |
 | k-NN | k = 5 |
+| E5 seeds | {20260920, 20260921, 20260922, 20260923, 20260924} |
+| E6 drift blocks | recent_block = 100 txns, delta_block = 150 txns (positions 101-250 back) |
+| E8 audit history sizes | n = 10, n = 50 |
 
 ### A.5 Not yet evaluated
 
-Explicitly incomplete, not estimated:
+Explicitly incomplete, not estimated. Items closed since the first draft are marked; everything else remains open.
 
-- Multi-seed repetition of cohort selection (single seed used).
-- History sizes above 250 on real data (dataset depth).
-- Any evaluation against confirmed fraud labels (no labelled dataset with per-user histories was available).
+- ~~Multi-seed repetition of cohort selection~~ — **closed for E1 and Experiment B (Mahalanobis/k-NN only)** by E5 (§6.8, §7.1). E2, Isolation Forest and the autoencoder in the simulation, and E3/E4/E7/E8 remain single-seed.
+- History sizes above 250 on **real** Berka data (dataset depth ceiling is structural, not addressable without a deeper real dataset). TabFormer (synthetic) reaches 500.
+- Any evaluation against **confirmed, adjudicated** fraud labels (no labelled real dataset with per-user histories was available). TabFormer's generator-produced `Is Fraud?` label was attempted as Protocol F (§7.10) but returned zero positive examples in the 300-entity evaluated cohort at 60-transaction windows — the base rate (0.122%) is too low for this sample size, not silently worked around.
 - Adversarial anomalies designed to evade a personal baseline.
-- Replication on IBM TabFormer or Sparkov to test whether curve shapes transfer to card-payment structure.
-- Disparate-impact audit across account or demographic segments.
-- Direct measurement of behavioural drift to test the §8.2 interpretation.
+- ~~Replication on IBM TabFormer or Sparkov~~ — **closed for TabFormer** by E7 (§5.4, §7.10). Sparkov remains untried. TabFormer replication surfaced a genuine divergence (Isolation Forest's ranking reverses), not a clean confirmation.
+- ~~Disparate-impact audit~~ — **closed at the ecological (district) level** by E8 (§7.11): no relationship found on the four district-economic axes tested. **Individual-level** demographic audit (age, tenure, immigration status, disability) remains impossible on Berka, which carries no such field.
+- ~~Direct measurement of behavioural drift~~ — **closed** by E6 (§7.6): drift is real and lag-dependent, but does not predict the per-account 100→250 marginal-gain sign or size. The mechanism behind that marginal-gain result is now an open question again, not a settled interpretation.
+- A targeted Protocol F follow-up on TabFormer that deliberately selects (User, Card) entities with historical generator-fraud, to get enough positive examples for a paired analysis (this session's attempt used an unselected random cohort and found none).
+- Cross-seed replication of E3, E4, E7 and E8.
+- Confirmation of the TabFormer download against its secondary IBM Box mirror (only the primary GitHub LFS endpoint was used this session).

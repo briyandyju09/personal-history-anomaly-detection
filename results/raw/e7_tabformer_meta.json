@@ -1,0 +1,19 @@
+{
+  "dataset": "IBM TabFormer credit_card (SYNTHETIC)",
+  "eligible_entities": 4538,
+  "min_transactions_required": 560,
+  "n_evaluated": 300,
+  "n_donors": 400,
+  "eval_window": 60,
+  "history_sizes": [
+    1,
+    5,
+    10,
+    25,
+    50,
+    100,
+    250,
+    500
+  ],
+  "seed": 20260920
+}

@@ -1,0 +1,9 @@
+{
+  "n_entities": 300,
+  "iforest_beats_mahalanobis_at_n": [
+    5,
+    10,
+    25,
+    50
+  ]
+}

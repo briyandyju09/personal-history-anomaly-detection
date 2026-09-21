@@ -231,3 +231,118 @@ deterministic. The brief asked for a small network, not a large one.
 
 All numbers reported in the paper come from executed code in this repository.
 Anything not executed is labelled as not yet evaluated rather than estimated.
+
+---
+
+## 8. Independent re-verification (new session, 2026-09-21)
+
+**Context.** This repository, `PAPER.md` and `web/` already existed (produced
+2026-09-20) when a fresh session picked up the project. Rather than trust
+the prior numbers or discard the prior work, the new session's first act was
+to restore the repository unchanged, snapshot every existing result to
+`results/_prior_run/`, and re-execute the documented pipeline from a clean
+Python 3.14.6 virtual environment on a different machine, before touching
+any code. See `docs/VERIFICATION.md` for the full number-by-number
+comparison once the re-run completes.
+
+**Data integrity strengthened.** The original `src/data_loader.py` verified
+row counts against the primary source's published figures but trusted a
+single GitHub mirror's byte content. This session added a second,
+independent mirror (`jlacko/berka-dataset`, a different GitHub account) and
+a SHA-256 cross-check between the two (after normalising line endings — the
+two mirrors use LF vs. CRLF, confirmed by direct byte diff to be the only
+difference). All eight tables matched on both row count and content hash,
+and the hash prefixes matched the ones already recorded in the reference
+`PAPER.md`'s Appendix A.2 exactly.
+
+**Environment not bit-reproducible.** The reference paper recorded pandas
+3.0.2 / numpy 2.4.4 / scikit-learn 1.8.0 / scipy 1.17.1 / matplotlib 3.10.8.
+This session's fresh `pip install` against the same `requirements.txt`
+lower bounds resolved pandas 3.0.6 / numpy 2.5.3 / scikit-learn 1.9.1 /
+scipy 1.18.1 / matplotlib 3.11.2 — all newer point releases on Python 3.14.6
+(only interpreter available on this machine; no 3.11/3.12/3.13 present).
+We did not attempt to pin to the exact prior versions. Any numeric
+differences between the reference run and this session's run are checked
+against this as a candidate explanation before being reported as a genuine
+discrepancy. See `docs/ENVIRONMENT.md`.
+
+---
+
+## 9. Extensions added this session
+
+Four new experiments were added to close gaps the reference paper's own
+Appendix A.5 and Sec. 9 (Limitations) listed as open, per this session's
+approved plan. Each is documented in its own module/script docstring; this
+entry records the cross-cutting design choices.
+
+**E5 (multi-seed replication).** Closes reference Sec. 9 limitation 13
+("Single seed for cohort selection... the first item of future work") and
+Appendix A.5's matching entry. Re-runs E1 (Berka, Protocol I) and the
+controlled simulation's B1 across 5 independent cohort-selection seeds.
+Scope was deliberately narrowed to keep runtime tractable: E2 (parametric
+protocol) is not replicated across seeds, and the simulation replicate uses
+only Mahalanobis and k-NN (not Isolation Forest or the autoencoder). Both
+narrowings are stated in `experiments/e5_multiseed.py`'s docstring and
+recorded as still-single-seed in the revised Appendix A.5, rather than
+silently presented as fully replicated.
+
+**E6 (direct drift measurement).** Reference Sec. 8.2 explicitly flags an
+unmeasured interpretation: that the negative 100->250 marginal PR-AUC gain
+(Sec. 7.1) and the cost of reaching further back (Sec. 7.6) are both
+consequences of behavioural drift. E6 measures the Mahalanobis distance
+between the 150 transactions that are added when history grows from 100 to
+250 and the 100 transactions already present, in each account's own
+current-behaviour coordinate system, and correlates that per-account drift
+against that account's own 100->250 gain. This is a descriptive distance
+computed independently of any detector's score or any anomaly label, so it
+cannot be circular with the main evaluation.
+
+**E7 (TabFormer card-structured replication).** Closes Appendix A.5's
+"Replication on IBM TabFormer or Sparkov to test whether curve shapes
+transfer" and Sec. 9 limitations 1 and 3 (single dataset; no merchant,
+category or geographic channels). TabFormer is SYNTHETIC — stated in every
+module that touches it — so it is reported as a third, clearly separated
+layer, never pooled with the real Berka results or the controlled
+behavioural simulation. Entity unit chosen: (User, Card), not User alone
+(see `src/tabformer_loader.py` docstring for the reasoning). A dedicated
+`src/tabformer_*` module set was written rather than parameterising
+`src/experiment_engine.py` directly — seemingly a deviation from the
+approved plan's literal wording ("Parameterise
+`run_history_size_experiment(...)` ... with `feature_fn` and `entity_col`").
+Reasoning: TabFormer's schema (MCC / merchant / city-state / use-chip) has
+no structural correspondence to Berka's (operation / k_symbol), so the two
+feature-building and injection steps share no code today; forcing them
+through one generic function would need a wide abstraction layer with a real
+chance of introducing a subtle bug into the already-verified Berka path, for
+a reuse benefit that does not actually exist between these two schemas. The
+genuinely dataset-independent modules — `src/models.py`, `src/evaluation.py`,
+`src/stats.py`, `feature_engineering.fit_scaler` — ARE reused unchanged, and
+the split design, hybrid mechanism (kappa=25) and injection protocol
+*logic* are reproduced exactly, just against the new schema. The regression
+gate (bit-identical Berka output) is satisfied trivially because
+`experiment_engine.py` was not touched at all.
+
+Verification, independent of any published TabFormer documentation: this
+session directly counted 24,386,900 transaction rows and 2,000 distinct
+users in the downloaded file (chunked full-file pass), matching the
+repository's stated "24 million records" and "2,000 users". This is a
+single-source verification (only the primary GitHub LFS endpoint was
+fetched, not the alternate IBM Box mirror the README also lists), weaker
+than Berka's two-independent-mirror hash cross-check, and this is stated as
+a limitation of the E7 layer specifically.
+
+**E8 (disparate-impact audit).** Reference Sec. 10 asserts a disparate-impact
+concern about sparse-history users but states plainly that no such audit was
+run. E8 joins the 300 evaluated Berka accounts to their district's economic
+attributes (average salary, unemployment rate, urbanisation, region — from
+`district.asc`, columns A1-A16) and tests whether the personal Mahalanobis
+detector's false-positive rate at n=10 and n=50 varies with these district
+variables. The district A1-A16 column mapping is not self-documenting in
+the raw file (headers are literally "A1", "A2", ...); this session verified
+the mapping against two independent secondary descriptions of the published
+schema (cross-checked against the actual Prague row's values, which are
+internally consistent with the claimed meanings), not re-derived from the
+CSV alone. This is stated as an ECOLOGICAL (district-level) audit, not an
+individual-level fairness audit, because Berka carries no per-person
+demographic field — a limitation stated in the script's own output and
+carried into the revised paper, not just in this log.

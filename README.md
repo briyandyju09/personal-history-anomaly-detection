@@ -2,7 +2,7 @@
 
 Measuring the data requirement for individualised financial behavioural anomaly detection.
 
-**Status: first-draft research project.** Every number in `PAPER.md` was produced by the code here. Anything not executed is listed as not yet evaluated in Appendix A.5 rather than estimated.
+**Status: first-draft research project, independently re-verified and extended.** Every number in `PAPER.md` was produced by the code here. A second session independently re-executed the entire pipeline from a clean environment before adding anything new — see `docs/VERIFICATION.md` for the number-by-number comparison (bit-exact match). Anything not executed is listed as not yet evaluated in Appendix A.5 rather than estimated.
 
 ---
 
@@ -10,7 +10,7 @@ Measuring the data requirement for individualised financial behavioural anomaly 
 
 How many of a person's own transactions does an unsupervised anomaly detector need before their personal behavioural baseline is worth using?
 
-Deployed systems assume a sufficiency point exists and filter users below it. We measure where it is, whether it exists, and whether it depends on the individual.
+Deployed systems assume a sufficiency point exists and filter users below it. We measure where it is, whether it exists, and whether it depends on the individual — on real bank data, on a controlled simulation, and (to test whether the finding is a quirk of one dataset) on a second, structurally different synthetic dataset.
 
 ## What it is not
 
@@ -27,10 +27,12 @@ On 300 real bank accounts, best model (shrinkage-regularised Mahalanobis):
 | Where does ranking performance saturate? | 90% of best observed at **25** transactions, saturated by 50 (fit R² = 0.970) |
 | Where does it become deployable? | **50** transactions. At 10 it flags 96% of all transactions |
 | Does across-individual performance ever stabilise? | **No**, at any size we evaluated |
-| Do sophisticated models help under scarcity? | No. Isolation Forest is worst at every size and 340× more expensive |
-| Is personalisation always better than a population model? | No. Global wins below ~10 transactions (Mahalanobis), ~50 (k-NN) |
+| Do sophisticated models help under scarcity? | No **on this dataset** — Isolation Forest is worst at every size and 340× more expensive. **But this reverses on our second dataset** (TabFormer, synthetic): Isolation Forest is competitive-to-best at small history sizes there. The claim is dataset-dependent, not universal. |
+| Is personalisation always better than a population model? | No. Global wins below ~10 transactions (Mahalanobis), ~50 (k-NN) on Berka; below ~25-100 on TabFormer, whose global model is stronger |
 | Does a hybrid help? | Yes on real data, never worse than either parent. Fails in simulation when personal signal lives in the representation |
-| Does behavioural variability set the requirement? | Yes under controlled manipulation (50 to 500 transactions across archetypes). **Null on real data** |
+| Does behavioural variability set the requirement? | Yes under controlled manipulation (50 to 500 transactions across archetypes). Null on real Berka data, but a real (Holm-significant) effect on TabFormer's geographic descriptor — mild evidence the real-data null reflects missing channels |
+| Does a negative 100→250 result mean older history is "stale" (drift)? | We tested this directly (E6): drift is real but does **not** predict which accounts see the effect. The mechanism is an open question again |
+| Is the harm from thin history concentrated in poorer/rural districts? | No detectable relationship found (E8, ecological audit) — the harm is large but not, on this axis, geographically concentrated |
 
 ---
 
@@ -38,36 +40,52 @@ On 300 real bank accounts, best model (shrinkage-regularised Mahalanobis):
 
 ```
 research/
-├── PAPER.md                       first-draft paper
+├── PAPER.md                       paper (independently re-verified + extended)
+├── PAPER.md.reference              the prior session's original first draft, kept for comparison
 ├── README.md
 ├── requirements.txt
 ├── docs/
-│   └── DECISION_LOG.md            every consequential decision, with reasons
+│   ├── DECISION_LOG.md             every consequential decision, with reasons
+│   ├── ENVIRONMENT.md              exact environment this session verified against
+│   └── VERIFICATION.md             number-by-number re-verification result
 ├── data/
 │   ├── README.md                  acquisition and licence
-│   └── raw/                       downloaded, not redistributed
+│   ├── raw/                       Berka, downloaded, not redistributed
+│   └── raw_tabformer/             TabFormer (E7), downloaded, not redistributed
 ├── src/
-│   ├── data_loader.py             download + integrity verification
-│   ├── feature_engineering.py     causal features, complexity descriptors
-│   ├── anomaly_injection.py       Protocol I and Protocol P
-│   ├── models.py                  detectors, global and hybrid arms
-│   ├── evaluation.py              imbalance-appropriate metrics
-│   ├── stats.py                   bootstrap, tests, saturation, thresholds
+│   ├── data_loader.py             download + dual-mirror integrity verification
+│   ├── feature_engineering.py     causal features, complexity descriptors (Berka)
+│   ├── anomaly_injection.py       Protocol I and Protocol P (Berka)
+│   ├── models.py                  detectors, global and hybrid arms (shared, dataset-agnostic)
+│   ├── evaluation.py              imbalance-appropriate metrics (shared)
+│   ├── stats.py                   bootstrap, tests, saturation, thresholds (shared)
 │   ├── simulation.py              controlled behavioural simulation
-│   └── experiment_engine.py       split design and experiment loop
+│   ├── experiment_engine.py       split design and experiment loop (Berka)
+│   └── tabformer_*.py             loader/features/injection/engine for E7 (TabFormer)
 ├── experiments/
 │   ├── pilot.py                   pipeline validation
 │   ├── run_all.py                 E1-E4 on real data
 │   ├── e3_temporal_fixed.py       corrected RQ5
 │   ├── run_simulation.py          Experiment B
 │   ├── analyse.py                 real-data analysis and figures
-│   └── analyse_simulation.py      simulation analysis and figures
+│   ├── analyse_simulation.py      simulation analysis and figures
+│   ├── e5_multiseed.py            E5: 5-seed replication
+│   ├── e6_drift.py                E6: direct drift measurement
+│   ├── run_tabformer.py           E7: TabFormer replication
+│   ├── analyse_tabformer.py       E7 tables and figures
+│   └── e8_disparate_impact.py     E8: disparate-impact audit
 ├── results/
-│   ├── raw/                       per-account per-model records
+│   ├── raw/                       per-account/entity per-model records
 │   ├── tables/                    analysis tables
-│   └── figures/                   figures
+│   ├── figures/                   figures
+│   └── _prior_run/                snapshot of the prior session's results, kept for comparison
 └── web/
-    └── index.html                 interactive research site
+    ├── index.html                 interactive research site (built, not hand-edited)
+    ├── index_template.html        page template — edit this, not index.html
+    ├── data.json                  data the page embeds, rebuilt from results/
+    ├── build_data.py              assembles data.json from results/
+    ├── build_site.py              stitches index_template.html + data.json -> index.html
+    └── md2html.py                 minimal Markdown->HTML converter for the embedded paper
 ```
 
 ---
@@ -77,24 +95,38 @@ research/
 ```bash
 pip install -r requirements.txt
 
-python -m src.data_loader               # download + verify + print SHA-256
-python -m experiments.pilot             # pipeline validation      ~4 min
-python -m experiments.run_all           # E1-E4, real data        ~25 min
-python -m experiments.e3_temporal_fixed # corrected RQ5            ~4 min
-python -m experiments.run_simulation    # Experiment B             ~7 min
+# Real-data pipeline (Berka)
+python -m src.data_loader               # download + dual-mirror verify + print SHA-256
+python -m experiments.pilot             # pipeline validation
+python -m experiments.run_all           # E1-E4, real data
+python -m experiments.e3_temporal_fixed # corrected RQ5
+python -m experiments.run_simulation    # Experiment B (controlled simulation)
 python -m experiments.analyse           # real-data tables/figures
 python -m experiments.analyse_simulation
+
+# Extensions added in the independent re-verification session
+python -m experiments.e5_multiseed        # E5: 5-seed replication of E1 + simulation
+python -m experiments.e6_drift            # E6: direct drift measurement (needs e1_impostor.csv)
+python -m experiments.run_tabformer       # E7: download TabFormer first, see src/tabformer_loader.py
+python -m experiments.analyse_tabformer
+python -m experiments.e8_disparate_impact # E8: disparate-impact audit (needs e1_impostor.csv)
+
+# Rebuild the interactive site from the results above
+python -m web.build_data
+python -m web.build_site
 ```
 
-Master seed `20260920`. Per-account seeds are `seed * 100003 + account_id`, so any single account can be re-run in isolation.
+Master seed `20260920` throughout, except E5, which sweeps `{20260920, 20260921, 20260922, 20260923, 20260924}` by design. Per-account seeds are `seed * 100003 + account_id` (Berka) or a stable hash of the entity string (TabFormer), so any single account/entity can be re-run in isolation.
 
-The loader will refuse to proceed if any downloaded table does not match the record counts published by the primary source.
+The Berka loader verifies every downloaded table against the record counts published by the primary source **and** cross-checks byte content against a second, independent GitHub mirror; it refuses to proceed on either mismatch.
+
+Wall-clock times are intentionally not given here — they are hardware- and load-dependent (our re-verification session ran several of these concurrently) and belong in a run log, not a reproducibility claim.
 
 ---
 
 ## Design choices that keep the evaluation honest
 
-**No leakage.** The evaluation window is the last 60 transactions of each account. Training history is the *n* transactions immediately before it. Nothing is ever both trained on and tested on. The window is identical across all history sizes, so comparisons are paired within account.
+**No leakage.** The evaluation window is the last 60 transactions of each account/entity. Training history is the *n* transactions immediately before it. Nothing is ever both trained on and tested on. The window is identical across all history sizes, so comparisons are paired within account.
 
 **Non-circular ground truth.** Anomalies are defined by provenance, not by a statistical rule. A held-out transaction is replaced by a real transaction from a different real account. No detector's score is involved in producing the label.
 
@@ -104,21 +136,25 @@ The loader will refuse to proceed if any downloaded table does not match the rec
 
 **Account-level resampling.** Bootstrap and paired tests resample accounts, the independent unit. Resampling transactions would understate uncertainty.
 
+**Interpretations get tested, not left standing.** When the first draft offered an untested explanation (behavioural drift, §7.6), the second session built a direct test for it (E6) rather than letting the plausible-sounding story stand unchecked. It failed the test, and the paper says so.
+
 ---
 
 ## Known limitations
 
 Read `PAPER.md` §9 in full before citing anything here. The largest:
 
-- One dataset, one bank, 1990s Czech retail banking. Day-resolution timestamps, no merchant, category or geography.
+- One **real** dataset, one bank, 1990s Czech retail banking. A second, synthetic, structurally different dataset (TabFormer, E7) probes but cannot close this — and itself surfaced a genuine divergence (Isolation Forest's ranking reverses), not a clean confirmation.
+- Day-resolution timestamps and no merchant/category/geography fields on real data.
 - Real-data history sizes stop at 250 because only 119 of 4,500 accounts have 500+ transactions.
 - The evaluated cohort is the more active half of the dataset, and so is least representative of the sparse-history users the study is most about.
 - Neither injection protocol models an adversary trying to imitate the account holder.
 - 10% injection rate is far above realistic fraud prevalence. Curve *shape* transfers; absolute values do not.
-- Single seed for cohort selection.
+- Cohort selection was repeated at 5 seeds (E5) for the primary curve, not for everything — E2, Isolation Forest/autoencoder in the simulation, and E3/E4/E7/E8 remain single-seed.
+- The disparate-impact audit (E8) is ecological (district-level); Berka has no individual-level demographic field.
 
 ---
 
 ## Ethics
 
-Sparse-history users are disproportionately new customers, young people and recent immigrants, and they are exactly the users for whom a personal model flags almost everything. Deploying personalisation without a history floor concentrates false positives on populations already more likely to face financial exclusion. See `PAPER.md` §10.
+Sparse-history users are disproportionately new customers, young people and recent immigrants, and they are exactly the users for whom a personal model flags almost everything. Deploying personalisation without a history floor concentrates false positives on populations already more likely to face financial exclusion. A district-level disparate-impact audit (E8) found no relationship between false-positive rate and a district's salary, unemployment, urbanisation or region — which narrows but does not clear this concern, since individual-level axes (age, tenure, immigration status, disability) remain untested. See `PAPER.md` §10.

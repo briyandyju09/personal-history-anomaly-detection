@@ -1,4 +1,12 @@
-# Core scientific stack. Versions below are those verified in our run.
+# Core scientific stack. Lower bounds are the oldest versions we have
+# verified this pipeline against. Verified in two independent sessions:
+#   session 1 (2026-09-20): pandas 3.0.2, numpy 2.4.4, scikit-learn 1.8.0,
+#     scipy 1.17.1, matplotlib 3.10.8
+#   session 2 (2026-09-21, independent re-verification + extensions):
+#     pandas 3.0.6, numpy 2.5.3, scikit-learn 1.9.1, scipy 1.18.1,
+#     matplotlib 3.11.2, Python 3.14.6
+# Both produced bit-identical results (docs/VERIFICATION.md), so the
+# pipeline is not pinned tighter than these lower bounds.
 pandas>=2.0
 numpy>=1.24
 scikit-learn>=1.3

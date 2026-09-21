@@ -1,0 +1,9 @@
+history_size,genuine_fraud_txns_seen,account_model_rows
+1,0,1800
+5,0,1800
+10,0,1800
+25,0,1800
+50,0,1800
+100,0,1800
+250,0,1800
+500,0,1800
