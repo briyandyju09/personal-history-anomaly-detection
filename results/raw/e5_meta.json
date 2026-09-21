@@ -1,0 +1,12 @@
+{
+  "seeds": [
+    20260920,
+    20260921,
+    20260922,
+    20260923,
+    20260924
+  ],
+  "n_eval_berka": 300,
+  "n_donors_berka": 400,
+  "note": "E1 (impostor) and simulation B1 (Mahalanobis+kNN only) replicated across seeds. E2 and the full B1 model set (iforest, autoencoder) not replicated across seeds; single-seed results for those remain in e1/e2/b1 tables."
+}

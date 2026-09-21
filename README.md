@@ -24,7 +24,7 @@ On 300 real bank accounts, best model (shrinkage-regularised Mahalanobis):
 
 | Question | Answer |
 |---|---|
-| Where does ranking performance saturate? | 90% of best observed at **25** transactions, saturated by 50 (fit R² = 0.970) |
+| Where does ranking performance saturate? | 90% of best observed at **25** transactions, saturated by 50 (fit R² = 0.970). **Identical at all 5 independent cohort-selection seeds tested (E5).** |
 | Where does it become deployable? | **50** transactions. At 10 it flags 96% of all transactions |
 | Does across-individual performance ever stabilise? | **No**, at any size we evaluated |
 | Do sophisticated models help under scarcity? | No **on this dataset** — Isolation Forest is worst at every size and 340× more expensive. **But this reverses on our second dataset** (TabFormer, synthetic): Isolation Forest is competitive-to-best at small history sizes there. The claim is dataset-dependent, not universal. |

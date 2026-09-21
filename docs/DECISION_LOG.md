@@ -286,6 +286,16 @@ narrowings are stated in `experiments/e5_multiseed.py`'s docstring and
 recorded as still-single-seed in the revised Appendix A.5, rather than
 silently presented as fully replicated.
 
+**Result (recorded once the run completed).** Both headline numbers proved
+stable: the relative-90 threshold for Mahalanobis was exactly 25
+transactions at all 5 seeds, and the global/personal crossover was exactly
+n=10 at all 5 seeds, despite the global model's own mean PR-AUC varying
+with the donor draw (0.262-0.330 across seeds). Across-seed SD of the
+curve's PR-AUC ranged 0.003-0.010. This is a positive result we did not
+know in advance we would get -- the plan was written before running E5, and
+the single-seed numbers could plausibly have turned out to be sensitive to
+the cohort draw. They were not.
+
 **E6 (direct drift measurement).** Reference Sec. 8.2 explicitly flags an
 unmeasured interpretation: that the negative 100->250 marginal PR-AUC gain
 (Sec. 7.1) and the cost of reaching further back (Sec. 7.6) are both
