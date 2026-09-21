@@ -77,6 +77,47 @@ Mahalanobis stride 1 = 0.647, stride 4 = 0.434, matching the reference's own des
 
 300 rows produced, matching the reference's evaluated cohort size.
 
+## E3 corrected (transaction count vs. temporal coverage), full cohort
+
+Paired comparisons vs. reference §7.6:
+
+| Model | Arm | Reference diff | Fresh diff | Reference p | Fresh p | Match |
+|---|---|---|---|---|---|---|
+| Mahalanobis | stride4 vs stride1 | −0.036 | −0.0361 | < 0.001 | < 0.001 (effect −0.300) | Yes |
+| Mahalanobis | stride2 vs stride1 | −0.004 (n.s.) | −0.0037, p=0.304 | 0.304 | 0.304 | Yes |
+| k-NN | stride2 vs stride1 | −0.062 | −0.0615 | < 0.001 | < 0.001 | Yes |
+| k-NN | stride4 vs stride1 | −0.110 | −0.1101 | < 0.001 | < 0.001 | Yes |
+
+## Experiment B (controlled simulation), full re-run
+
+**B1, per-archetype relative-90 thresholds** (Mahalanobis) — vs. reference §7.8:
+
+| Archetype | Reference | Fresh | Match |
+|---|---|---|---|
+| regular | 50 | 50 | Yes |
+| moderate | 250 | 250 | Yes |
+| seasonal | 250 | 250 | Yes |
+| burst | 250 | 250 | Yes |
+| traveller | 500 | 500 | Yes |
+| variable | 500 | 500 | Yes |
+
+Best-observed PR-AUC per archetype also matched exactly (0.939, 0.929, 0.923, 0.927, 0.928, 0.900).
+
+**B3, behavioural-complexity correlations** — vs. reference §7.8:
+
+| Descriptor | Reference ρ (vs. threshold) | Fresh ρ | Match |
+|---|---|---|---|
+| n_unique_merchants | +0.708 | +0.7080 | Yes |
+| category_entropy | +0.700 | +0.7002 | Yes |
+| merchant_entropy | +0.700 | +0.6995 | Yes |
+| log_amount_sd | +0.673 | +0.6728 | Yes |
+| location_entropy | +0.617 | +0.6167 | Yes |
+| gap_cv | +0.484 | +0.4842 | Yes |
+
+**B2, anomaly-class detectability** — vs. reference §7.9: amount at n=1/10/50/250/500 = 0.789/0.576/0.744/0.861/0.873 in both reference and fresh run. Match.
+
+**Arms (personal/global/hybrid), simulation** — vs. reference §7.5: personal reaches 0.924 at n=500, hybrid plateaus at 0.401 (reference: "the hybrid plateaus at 0.401 while the personal model reaches 0.924"). Match.
+
 ## Conclusion of the verification pass
 
-**No discrepancy was found between this session's independent re-execution and the reference paper's reported numbers, across every experiment checked.** This is strong evidence that the reference paper's first-draft numbers were genuinely produced by the committed code, not adjusted, cherry-picked, or produced by a different code path than what is in the repository. The re-verification is treated as complete for E1-E4; the remainder of the pipeline (`e3_temporal_fixed`, `run_simulation`, `analyse`, `analyse_simulation`) was re-run in the same session under the same conditions (see run logs under `results/raw/*.log` for this session's timestamps).
+**No discrepancy was found between this session's independent re-execution and the reference paper's reported numbers, across every experiment in the paper — E1, E2, E3 (both original and corrected), E4, and Experiment B (B1, B2, B3) in full.** This is strong evidence that the reference paper's first-draft numbers were genuinely produced by the committed code, not adjusted, cherry-picked, or produced by a different code path than what is in the repository. The independent re-verification is complete. Everything reported in the revised `PAPER.md` beyond this point (E5, E6, E7, E8) is new work performed this session, not re-verification of prior claims.
