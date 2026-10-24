@@ -25,14 +25,14 @@ On 300 real bank accounts, best model (shrinkage-regularised Mahalanobis):
 | Question | Answer |
 |---|---|
 | Where does ranking performance saturate? | 90% of best observed at **25** transactions, saturated by 50 (fit R² = 0.970). **Identical at all 5 independent cohort-selection seeds tested (E5).** |
-| Where does it become deployable? | **50** transactions. At 10 it flags 96% of all transactions |
+| Where does it get a usable operating point? | **Depends on the threshold rule.** In-sample calibration (first draft): 50 transactions, and at 10 it flags 96% of everything. Leave-one-out calibration (E9, corrected): about **25** transactions for Mahalanobis, the autoencoder and the hybrid (FPR 0.066 / 0.049 / 0.040 vs 0.05 nominal), about 50 for k-NN, not reached within 250 for Isolation Forest; at 10 Mahalanobis flags only 1.2% (recall 0.055). The "96%" figure was an in-sample-scoring artefact, but the bias is not uniform in direction (Isolation Forest at n=5 goes the other way). All six detectors plus the hybrid, five seeds, exact leave-one-out. |
 | Does across-individual performance ever stabilise? | **No**, at any size we evaluated |
 | Do sophisticated models help under scarcity? | No **on this dataset** — Isolation Forest is worst at every size and 340× more expensive. **But this reverses on our second dataset** (TabFormer, synthetic): Isolation Forest is competitive-to-best at small history sizes there. The claim is dataset-dependent, not universal. |
 | Is personalisation always better than a population model? | No. Global wins below ~10 transactions (Mahalanobis), ~50 (k-NN) on Berka; below ~25-100 on TabFormer, whose global model is stronger |
 | Does a hybrid help? | Yes on real data, never worse than either parent. Fails in simulation when personal signal lives in the representation |
 | Does behavioural variability set the requirement? | Yes under controlled manipulation (50 to 500 transactions across archetypes). Null on real Berka data, but a real (Holm-significant) effect on TabFormer's geographic descriptor — mild evidence the real-data null reflects missing channels |
 | Does a negative 100→250 result mean older history is "stale" (drift)? | We tested this directly (E6): drift is real but does **not** predict which accounts see the effect. The mechanism is an open question again |
-| Is the harm from thin history concentrated in poorer/rural districts? | No detectable relationship found (E8, ecological audit) — the harm is large but not, on this axis, geographically concentrated |
+| Is false-positive burden concentrated in poorer/rural districts? | No Holm-significant relationship (E8 in-sample FPR; E8b leave-one-out FPR). Ecological audit, 300 accounts, cannot exclude weak effects; an uncorrected weak negative salary trend is reported, not claimed |
 
 ---
 
@@ -73,7 +73,11 @@ research/
 │   ├── e6_drift.py                E6: direct drift measurement
 │   ├── run_tabformer.py           E7: TabFormer replication
 │   ├── analyse_tabformer.py       E7 tables and figures
-│   └── e8_disparate_impact.py     E8: disparate-impact audit
+│   ├── e8_disparate_impact.py     E8: disparate-impact audit (in-sample FPR)
+│   ├── e9_loo_calibration.py      E9: in-sample vs leave-one-out threshold calibration (Mahalanobis, k-NN, primary seed)
+│   ├── e9_loo_full.py             E9 full: every detector + hybrid, five seeds, exact LOO (~4 h, resumable)
+│   ├── analyse_e9_full.py         E9 full: summary and paired tables
+│   └── e8b_disparate_impact_loo.py  E8b: E8 repeated on the leave-one-out FPR
 ├── results/
 │   ├── raw/                       per-account/entity per-model records
 │   ├── tables/                    analysis tables
@@ -110,6 +114,10 @@ python -m experiments.e6_drift            # E6: direct drift measurement (needs 
 python -m experiments.run_tabformer       # E7: download TabFormer first, see src/tabformer_loader.py
 python -m experiments.analyse_tabformer
 python -m experiments.e8_disparate_impact # E8: disparate-impact audit (needs e1_impostor.csv)
+python -m experiments.e9_loo_calibration  # E9: in-sample vs leave-one-out calibration
+python -m experiments.e9_loo_full         # E9 full: all detectors + hybrid, 5 seeds (~4 h on 20 workers)
+python -m experiments.analyse_e9_full     # E9 full: summary tables
+python -m experiments.e8b_disparate_impact_loo  # E8b: E8 on LOO FPR (needs e9 output)
 
 # Rebuild the interactive site from the results above
 python -m web.build_data
@@ -130,7 +138,7 @@ Wall-clock times are intentionally not given here — they are hardware- and loa
 
 **Non-circular ground truth.** Anomalies are defined by provenance, not by a statistical rule. A held-out transaction is replaced by a real transaction from a different real account. No detector's score is involved in producing the label.
 
-**No test-label threshold tuning.** Operating points come from the 95th percentile of the model's scores on its own training data, which is what a deployed system could actually do, and which visibly breaks when history is too short.
+**No test-label threshold tuning, but the first-draft rule was biased.** Operating points in the main pipeline come from the 95th percentile of the model's scores on its own training data. That is in-sample and biased low at small n (E9 showed the apparent "flags 96% at n=10" result is largely this artefact). The corrected leave-one-out rule now covers the six personal detectors and the shrinkage hybrid on Berka at five seeds; the global arm, score-fusion hybrid, parametric protocol, simulation and TabFormer still use the in-sample rule, which is biased low for most detectors at small n but not an upper bound for all of them. PR-AUC results do not depend on any threshold rule.
 
 **Degenerate regimes are recorded, not hidden.** At n = 1 dispersion is undefined. The affected models fall back to documented behaviour and every row carries a `degenerate` flag.
 
@@ -157,4 +165,4 @@ Read `PAPER.md` §9 in full before citing anything here. The largest:
 
 ## Ethics
 
-Sparse-history users are disproportionately new customers, young people and recent immigrants, and they are exactly the users for whom a personal model flags almost everything. Deploying personalisation without a history floor concentrates false positives on populations already more likely to face financial exclusion. A district-level disparate-impact audit (E8) found no relationship between false-positive rate and a district's salary, unemployment, urbanisation or region — which narrows but does not clear this concern, since individual-level axes (age, tenure, immigration status, disability) remain untested. See `PAPER.md` §10.
+Sparse-history users are disproportionately new customers, young people and recent immigrants, and they are the users with the thinnest personal baseline. The first draft said a personal model flags almost everything for them; that came from the biased in-sample threshold and is withdrawn (with leave-one-out calibration a 10-transaction detector is nearly silent instead, and from about 25 transactions FPR is 6-8% against a 5% target). The concern about deploying personalisation without a history floor stands, in a less clear-cut form. A district-level disparate-impact audit (E8, E8b) found no Holm-significant relationship between false-positive rate and a district's salary, unemployment, urbanisation or region — which narrows but does not clear this concern, since individual-level axes (age, tenure, immigration status, disability) remain untested. See `PAPER.md` §10.

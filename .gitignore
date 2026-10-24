@@ -7,3 +7,17 @@ __pycache__/
 .ipynb_checkpoints/
 data/raw_tabformer/
 .impeccable/
+
+# LaTeX build intermediates (paper and slides)
+paper/*.aux
+paper/*.log
+paper/*.out
+paper/*.bbl
+paper/*.blg
+paper/*.toc
+slides/*.aux
+slides/*.log
+slides/*.nav
+slides/*.out
+slides/*.snm
+slides/*.toc

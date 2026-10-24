@@ -197,7 +197,7 @@ individually and correlated individually, with Holm correction across the
 family.
 
 **5g. Clustering methods dropped in favour of k-NN distance.** The brief listed
-K-Means, DBSCAN and GMM. With n as small as 1 to 25, in a 23-dimensional
+K-Means, DBSCAN and GMM. With n as small as 1 to 25, in a 21-dimensional
 one-hot-heavy space, cluster counts and density parameters cannot be estimated
 without tuning on data we do not have. Distance to the k-th nearest training
 point is the representation-appropriate member of that family, needs no cluster
@@ -205,7 +205,7 @@ count, and degrades gracefully. Using all three regardless would have been
 variety for its own sake, which the brief explicitly warns against.
 
 **5h. Autoencoder implemented in NumPy.** PyTorch is not installed in the
-execution environment. A 23-4-23 tanh autoencoder trained with full-batch Adam
+execution environment. A 21-4-21 tanh autoencoder trained with full-batch Adam
 is small enough to implement directly, which also makes the run fully
 deterministic. The brief asked for a small network, not a large one.
 
@@ -356,3 +356,23 @@ CSV alone. This is stated as an ECOLOGICAL (district-level) audit, not an
 individual-level fairness audit, because Berka carries no per-person
 demographic field — a limitation stated in the script's own output and
 carried into the revised paper, not just in this log.
+
+---
+
+## 10. Operating-threshold calibration found biased; corrected for Mahalanobis and k-NN (2026-10-23)
+
+**Finding.** `src/experiment_engine.py` computes each detector's operating threshold as the 95th percentile of the scores it assigns to the training points it was just fitted on. In-sample scores are biased low (for personal Mahalanobis with n <= d = 21 the covariance is singular and training points score near zero; a k-NN training point counts itself as a neighbour). The first draft's "flags 96% at n=10" and its "noisy quantile" explanation came from this.
+
+**Decision.** Do not modify `experiment_engine.py`: every published table was produced by it and the bit-exact verification depends on it. Add E9 (`experiments/e9_loo_calibration.py`) as a separate experiment that regenerates the in-sample numbers (matching the reference exactly) alongside a leave-one-out threshold. Report both in PAPER.md section 7.2, withdraw the 96% claim, and mark every other operating-point metric as in-sample.
+
+**Why leave-one-out.** It is the cheapest out-of-sample estimate from the person's own history alone, so no population data or test labels are used. It is one choice among several (split-half, population-derived); alternatives were not compared, which the paper states.
+
+**Scope and what is not done.** Mahalanobis and k-NN only, primary seed only. Not run for iforest, autoencoder, z-scores, the hybrid arm, the E5 seeds, or TabFormer. E8 was repeated as E8b because its n=10 half ran against a ceiling.
+
+**Process note.** This was found by the author while an automated reviewer (a local qwen3:8b via the llm-chat MCP) was running; the reviewer scored 8/10 and did not mention it. The loop's stop rule fired on that score, so the paper has not had an independent second review since the correction.
+
+### Update (2026-10-24): E9 extended
+
+Ran `experiments/e9_loo_full.py` for gaussian_z, robust_z, mahalanobis, knn, iforest, autoencoder and hybrid_shrinkage across the five E5 seeds, with exact leave-one-out for all (an approximation such as K-fold would be a different rule from the one already reported; Isolation Forest costs ~340 ms per refit so the run took ~3.8 h on 20 workers). `analyse_e9_full.py` was written before the results existed and defines no 'usable operating point' criterion, to avoid choosing one after seeing the numbers.
+
+Results that changed the reading: the artefact also affects the autoencoder and the hybrid; it is stable across seeds (across-seed SD of Mahalanobis mean LOO FPR <= 0.008); it is **not** uniform in direction (Isolation Forest flags more under LOO at n=5; robust z in-sample FPR is slightly lower at n>=50), so the earlier statement that in-sample figures are an upper bound on false-positive burden was withdrawn. k-NN at n=5 is identical under both rules by identity (k = n), verified on all 1,500 rows. The hybrid has the best small-n operating behaviour (observation, not tested). Not run: global arm, score-fusion hybrid, E2, simulation, TabFormer.

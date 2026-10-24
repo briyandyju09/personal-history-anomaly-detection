@@ -151,3 +151,27 @@ be dataset-dependent rather than universal once a second dataset was
 tried. Both are reported as what they are — a retraction of an untested
 interpretation, and a genuine, not-fully-understood divergence — rather
 than smoothed into the existing narrative.
+
+---
+
+## Addendum (2026-10-23): revisions after the automated review loop
+
+This checklist was filled in before Experiment E9. The original answers above are kept as written; the items below were found to need qualification. See `review-stage/AUTO_REVIEW.md`.
+
+- **Item 3 (data leakage) and item 4 (train/test methodology): answers stand for leakage, but incomplete.** There is no train/test leakage. However the operating threshold was computed from *in-sample* training scores (`s_train = model.score(X_hist)` after fitting on `X_hist`), which is biased low at small n. This is a calibration bias, not leakage, and the checklist did not look for it.
+- **Item 7 (metrics appropriate): PR-AUC answer stands; the operating-point answer does not.** The "PR-AUC 0.441 vs 96% flag rate" example cited above as a strength is an in-sample-calibration artefact. With leave-one-out calibration (E9) Mahalanobis flags 1.2% at n=10 and has FPR 0.066 at n=25.
+- **Item 8 (conclusions supported by results): the 96% claim and its 'noisy quantile' explanation were not supported.** They were untested interpretation. Withdrawn in PAPER.md section 7.2.
+- **Item 12 (reproducibility): still true, but reproduction does not validate the method.** The bit-exact reproduction in VERIFICATION.md confirmed the code produced the reported numbers, including the biased ones.
+- **Item 13 (limitations): extended** with limitation 15 (in-sample operating-point metrics outside E9) and the grid-resolution caveat.
+
+Remaining open: E9 covers Mahalanobis and k-NN on the primary seed only; the other detectors, hybrid arm, E5 seeds and TabFormer still use the in-sample rule.
+
+---
+
+### Update (2026-10-24): E9 extended to all detectors and five seeds
+
+The full run (`experiments/e9_loo_full.py`; exact leave-one-out for all six personal detectors and the shrinkage-hybrid arm on the five E5 cohorts) is complete. Validation: in-sample rows reproduce `e5_multiseed_e1.csv` on all 14,700 rows per seed (max abs diff 1.1e-16); primary-seed Mahalanobis and k-NN leave-one-out rows equal the first E9 exactly (8,400/8,400).
+
+- Items above that said "Mahalanobis and k-NN, primary seed only" are superseded for Berka E1. Still not run under leave-one-out: global arm, score-fusion hybrid, E2, simulation, TabFormer.
+- **QC item 7 refinement:** the in-sample rule is biased low for most detectors at small n but is not an upper bound for all (Isolation Forest at n=5 and robust z at n>=50 go the other way), so the wording 'upper bound on false-positive burden' used earlier in the paper was itself too strong and has been removed (limitation 15).
+- Untested confound recorded: for Isolation Forest at n<=10 the leave-one-out forest has a different subsample size from the n-point forest, so its scores may not share a scale with the evaluation-window scores.

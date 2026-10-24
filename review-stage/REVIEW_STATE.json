@@ -1,0 +1,10 @@
+{
+  "round": 1,
+  "status": "completed",
+  "last_score": 8.0,
+  "last_verdict": "almost",
+  "reviewer_backend": "llm-chat MCP (qwen3:8b, local)",
+  "reviewer_reliability": "low: several criticisms were factually wrong or out of scope; it missed the in-sample calibration flaw found by the author",
+  "pending_experiments": [],
+  "timestamp": "2026-10-23T00:00:00"
+}

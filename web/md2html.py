@@ -19,6 +19,8 @@ import re
 
 def _inline(text: str) -> str:
     text = html.escape(text, quote=False)
+    # autolinks <https://...> (escaped to &lt;...&gt; above)
+    text = re.sub(r"&lt;(https?://[^\s&]+)&gt;", r'<a href="\1">\1</a>', text)
     # links [text](url)
     text = re.sub(r"\[([^\]]+)\]\(([^)]+)\)", r'<a href="\2">\1</a>', text)
     # bold **text**

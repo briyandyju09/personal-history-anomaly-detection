@@ -121,3 +121,21 @@ Best-observed PR-AUC per archetype also matched exactly (0.939, 0.929, 0.923, 0.
 ## Conclusion of the verification pass
 
 **No discrepancy was found between this session's independent re-execution and the reference paper's reported numbers, across every experiment in the paper — E1, E2, E3 (both original and corrected), E4, and Experiment B (B1, B2, B3) in full.** This is strong evidence that the reference paper's first-draft numbers were genuinely produced by the committed code, not adjusted, cherry-picked, or produced by a different code path than what is in the repository. The independent re-verification is complete. Everything reported in the revised `PAPER.md` beyond this point (E5, E6, E7, E8) is new work performed this session, not re-verification of prior claims.
+
+---
+
+## Addendum (2026-10-23): what this verification does and does not establish
+
+Everything above establishes that re-running the code reproduces the reported numbers bit-for-bit. It does not establish that every reported quantity measures what the paper says it measures.
+
+Experiment E9 (`experiments/e9_loo_calibration.py`) found one that does not: the operating-point metrics (flag rate, FPR, precision, recall) use a threshold calibrated on in-sample training scores, which is biased low at small n. As a consistency check, E9 regenerates the in-sample numbers on the same cohort, seed and injected labels and they **match the reference table exactly** (Mahalanobis flag rate 0.999 / 0.989 / 0.960 / 0.391 / 0.251 / 0.196 / 0.162 at n = 1 / 5 / 10 / 25 / 50 / 100 / 250). The leave-one-out rows are new work, not re-verification.
+
+PR-AUC, ROC-AUC, thresholds on PR-AUC curves, saturation fits, paired tests on PR-AUC, and all simulation and TabFormer PR-AUC results are unaffected: they do not use a threshold rule.
+
+The site (`web/`) was rebuilt after this change; its page script was exercised under a stubbed DOM in Node (no script errors, rendered E9/E8b tables match the CSVs), but not in a real browser.
+
+---
+
+### Update (2026-10-24): full E9 validation
+
+Per-seed checks are in `results/tables/e9_full_validation.csv`: for each of the five seeds, 14,700 of 14,700 in-sample rows matched the E5 reference with max absolute differences of 1.1e-16 (pr_auc, flag_rate, fpr) and 5.6e-17 (recall). The primary-seed Mahalanobis and k-NN leave-one-out rows from the separate first-E9 script match the full-run rows exactly, so two independent implementations of the leave-one-out rule agree. The leave-one-out rows for the other detectors have no second implementation; they rely on the in-sample reproduction showing the harness (cohorts, labels, seeds, detector construction) is right, and on the leave-one-out step being the same generic refit-and-score function for every detector.

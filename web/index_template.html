@@ -4,6 +4,8 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>How Much Personal History Is Enough?</title>
+<meta name="description" content="An interactive research paper measuring how much personal transaction history an individualised anomaly detector needs before it beats a global model.">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
 <style>
 :root{
   box-sizing:border-box;
@@ -61,6 +63,7 @@ button.t:hover{border-color:var(--accent)}
 button.t.on{background:var(--accent);border-color:var(--accent);color:var(--bg)}
 .chart{width:100%;overflow-x:auto}
 svg{display:block;max-width:100%;height:auto}
+.wrap a,.wrap code{overflow-wrap:anywhere}
 .tblwrap{overflow-x:auto;margin:16px 0}
 table{border-collapse:collapse;width:100%;font-size:14px;
  font-family:ui-monospace,SFMono-Regular,Menlo,monospace}
@@ -145,11 +148,7 @@ pre code{background:none;padding:0}
 .flowbox{background:var(--panel);border:1px solid var(--accent);border-radius:10px;
  padding:12px 20px;font-family:ui-monospace,monospace;font-size:13px;
  text-align:center;min-width:220px}
-.flowarrow{color:var(--muted);font-size:20px;line-height:1;margin:2px 0}
-@media(min-width:640px){
- .flowdiag.horiz{flex-direction:row;align-items:center}
- .flowdiag.horiz .flowarrow{transform:rotate(-90deg)}
-}
+.flowarrow{color:var(--muted);font-size:20px;line-height:1;margin:2px 0;transform:rotate(90deg)}
 /* embedded paper */
 .paper-body{font-size:15px;line-height:1.6}
 .paper-body h1{font-size:22px;margin:0 0 16px;font-weight:600}
@@ -204,8 +203,8 @@ engineering parameter. We could not find published work measuring it.</p>
 
 <div class="grid">
   <div class="card"><div class="n">25</div><div class="l">transactions to reach 90% of best ranking performance (Berka, real data)</div></div>
-  <div class="card"><div class="n">50</div><div class="l">transactions before the false-positive rate is tolerable</div></div>
-  <div class="card"><div class="n">96%</div><div class="l">of all transactions flagged at 10 transactions of history</div></div>
+  <div class="card"><div class="n">~25</div><div class="l">transactions before the false-positive rate is near its 5% target, with leave-one-out calibration (50 under the first draft's biased in-sample rule). Holds for Mahalanobis, the autoencoder and the hybrid; k-NN needs about 50, Isolation Forest does not get there within 250</div></div>
+  <div class="card"><div class="n">1.2%</div><div class="l">of transactions flagged at 10 transactions of history under out-of-sample calibration. The first draft's "96%" was an in-sample scoring artefact</div></div>
   <div class="card"><div class="n">never</div><div class="l">history size at which performance stabilises across individuals</div></div>
 </div>
 
@@ -348,22 +347,60 @@ parameters alone.</p>
 <div class="tblwrap"><table id="te5thr"></table></div>
 <p class="cap" id="e5cap"></p>
 
-<h2 id="ranking">2. Ranking quality and deployability are not the same thing</h2>
-<p>PR-AUC measures ranking. A deployed detector needs an operating point. We set the threshold at
-the 95th percentile of the model's scores on <i>its own training data</i> — the rule a real system
-could apply, without touching test labels.</p>
+<h2 id="ranking">2. Ranking quality and the operating point (corrected)</h2>
+<div class="note">
+<strong>Correction.</strong> The first draft of this paper reported that a model which ranks well at
+10 transactions "flags 96% of everything", and explained it as a noisy threshold estimate. A follow-up
+experiment (E9) found that figure is an <b>artefact of calibrating the threshold on in-sample scores</b>,
+which are biased low by construction. Both versions are shown below; only the leave-one-out one is a
+statement about a detector that could be deployed.
+</div>
+<p>PR-AUC measures ranking. A deployed detector also needs an operating point: a threshold at the 95th
+percentile of the model's scores on its own training history, with no access to test labels.</p>
 
 <div class="panel">
+  <h3>First draft: threshold from <i>in-sample</i> training scores (biased)</h3>
   <div class="tblwrap"><table id="top"></table></div>
-  <p class="cap">Shrinkage Mahalanobis, personal arm. At 10 transactions PR-AUC is 0.441, more than
-  four times the prevalence baseline, and the same model flags 96% of everything. It achieves near
-  perfect recall by alerting on almost all transactions.</p>
+  <p class="cap">Shrinkage Mahalanobis, personal arm. A model fitted on its own training points scores
+  those same points as unusually normal, so the 95th-percentile threshold lands far too low. For
+  n &le; 21 (the feature count) the covariance is singular and this is most severe.</p>
 </div>
 
-<p>With a short history the model cannot estimate the <i>scale</i> of its own score distribution
-even when it ranks tolerably well. The 95th percentile of ten training scores is a poor estimate of
-the 95th percentile of the score distribution. <b>Ranking ability and calibration have different
-data requirements, and calibration is the more expensive of the two.</b></p>
+<div class="panel">
+  <h3>Corrected: threshold from <i>leave-one-out</i> training scores (Experiment E9)</h3>
+  <div class="tblwrap"><table id="toploo"></table></div>
+  <p class="cap" id="toplocap">Each training point is scored by a model fitted on the other n&minus;1.
+  Same 300 accounts, seed and injected labels as above. Nominal FPR is 0.05. Mahalanobis, primary seed.
+  Leave-one-out has no score at n=1, so nothing is flagged there. The next panel repeats this for every
+  detector across five seeds.</p>
+</div>
+
+<div class="panel">
+  <h3>Every detector, five cohort seeds (E9 full run)</h3>
+  <p class="cap">Mean false-positive rate under leave-one-out calibration, with the in-sample value in
+  parentheses. Nominal is 0.05. 300 accounts &times; 5 seeds per cell; exact leave-one-out refits for every
+  detector. The in-sample rows reproduce the earlier five-seed results to within 1e-16.</p>
+  <div class="tblwrap"><table id="toplofull"></table></div>
+  <p class="cap">Recall under leave-one-out calibration, same cells.</p>
+  <div class="tblwrap"><table id="toplofullrec"></table></div>
+  <p class="cap" id="toplofullcap"></p>
+</div>
+
+<p>With out-of-sample calibration the failure at 10 transactions is the <i>opposite</i> one: the
+Mahalanobis detector is almost silent (it flags 1.2% and catches 5.8% of the anomalies), not noisy.
+From 25 transactions its false-positive rate is 0.066 against a 0.05 target, so for the detectors that
+also rank well (Mahalanobis, the autoencoder, the hybrid) a usable operating point appears at about the
+same history size as the ranking threshold, not at 50. Not every detector follows: k-NN is silent
+until about 50, Isolation Forest does not reach a useful recall within 250, and the z-score detectors
+stay conservative and weak. The bias is also not uniform in direction: for Isolation Forest the
+out-of-sample rule flags <i>more</i> than the in-sample one at n=5, which may be a scale mismatch between
+the n&minus;1-point forest and the n-point forest (untested). The hybrid has the best small-history operating
+behaviour measured (n=10: FPR 0.028, recall 0.254, against 0.012 and 0.055 for personal Mahalanobis), an
+observation, not a significance-tested comparison. Two caveats: the 5% target is
+still missed by 1.6&ndash;3 points at most sizes, and leave-one-out is only one out-of-sample rule
+(split-half and population-derived thresholds were not compared).
+<b>What survives:</b> PR-AUC alone does not say whether an operating point is usable, and the
+operating point depends heavily on how the threshold is calibrated.</p>
 
 <h2 id="threshold">3. Personalisation threshold explorer</h2>
 <button class="eli5btn" data-eli5="thr">ELI5: what's a "threshold" here?</button>
@@ -563,11 +600,17 @@ or region? (Berka carries no individual-level demographic field — this is an e
 <div class="tblwrap"><table id="te8"></table></div>
 <p class="cap" id="e8cap"></p>
 <div class="note">
-<strong>No detectable relationship on any of the four axes tested.</strong> The harm from thin
-history itself is real and large (≈95% flag rate at n=10, ≈19% at n=50) — this audit did not find
-it to be further concentrated by district-level economic disadvantage. It cannot test age, tenure,
-immigration status or disability, which Berka does not record.
+<strong>No Holm-significant relationship on any of the four axes tested.</strong> The table above uses
+the first draft's in-sample FPR, which at n=10 sits at a ceiling (&asymp;0.95 for everyone), so that half is
+uninformative. We repeated the audit with the corrected leave-one-out FPR (E8b, below): still nothing
+significant after correction. A weak negative salary trend (higher-salary districts, somewhat lower
+FPR; uncorrected p = 0.046 and 0.024 at two sizes, |&rho;| &le; 0.13) is reported but not claimed. With 300
+accounts the audit cannot exclude weak effects. It also cannot test age, tenure, immigration status
+or disability, which Berka does not record.
 </div>
+<h3>E8b: the same audit with leave-one-out FPR</h3>
+<div class="tblwrap"><table id="te8b"></table></div>
+<p class="cap" id="e8bcap"></p>
 
 <h2 id="cost">Computational cost</h2>
 <div class="tblwrap"><table id="tcost"></table></div>
@@ -611,6 +654,15 @@ Forest/autoencoder in the simulation, and E3/E4/E7/E8 remain single-seed.</li>
 sizes appear beside every test.</li>
 <li>The disparate-impact audit (§10) is ecological (district-level); Berka has no individual
 demographic field to audit directly.</li>
+<li><b>Operating-point calibration (E9).</b> The first draft's threshold rule was biased at small n.
+Leave-one-out calibration covers the six personal detectors and the shrinkage hybrid on Berka at five
+seeds. Every other FPR / flag-rate figure on this site (the global arm, the score-fusion hybrid, the
+parametric protocol, the simulation, TabFormer) still uses the in-sample rule. That rule is biased low
+for most detectors at small n but is <i>not</i> an upper bound for all of them (Isolation Forest at
+n=5 goes the other way), so those figures are not a worst case either. PR-AUC-based results and
+thresholds do not depend on any threshold rule and are unaffected.</li>
+<li>The relative-90 threshold is read off a coarse history-size grid: "25" means the first grid point
+reached, and the true crossing lies between 10 and 25.</li>
 </ul>
 
 <h2 id="ethics">Ethics</h2>
@@ -622,16 +674,20 @@ people for changing.</p>
 money. A false positive can mean a declined card abroad, a frozen account during an emergency, or a
 customer treated as a suspect.</p>
 <p><b>Sparse-history users bear the cost.</b> They are disproportionately new customers, young
-people, recent immigrants and people re-entering formal banking — exactly the users for whom a
-personal model flags almost everything. Deploying personalisation without a history floor
-concentrates false positives on populations already more likely to face financial exclusion. Our
-finding that a population or hybrid model beats personalisation in the sparse regime is directly
-relevant: for these users, personalisation is not merely useless, it is harmful.</p>
+people, recent immigrants and people re-entering formal banking — exactly the users with the thinnest
+personal baseline. The first draft said a personal model "flags almost everything" for them; that
+figure came from a biased in-sample threshold (§2) and is withdrawn. With out-of-sample calibration
+the thin-history failure at 10 transactions is a nearly silent detector, and from about 25 the
+false-positive rate is 6&ndash;8% against a 5% target. The concern about deploying personalisation
+without a history floor stands, but its form is less clear-cut than we first claimed. Our finding
+that a population or hybrid model beats personalisation in the sparse regime (by PR-AUC, which
+does not depend on the threshold rule) is unaffected.</p>
 <p>Behavioural features are proxies for life circumstances. Irregular income, cash reliance and
 geographic mobility correlate with class, occupation, immigration status and disability. A detector
 calibrated on regular salaried behaviour treats irregular lives as anomalous by default. <b>We have
-since run a disparate-impact audit (§10)</b> and found no detectable relationship between
-false-positive rate and district-level salary, unemployment, urbanisation or region — which narrows,
+since run a disparate-impact audit (§10)</b> and found no Holm-significant relationship between
+false-positive rate and district-level salary, unemployment, urbanisation or region, under either
+calibration rule (300 accounts cannot exclude weak effects) — which narrows,
 but does not clear, this concern: individual-level axes (age, tenure, immigration status,
 disability) remain untested, and no system of this kind should be deployed without auditing them.</p>
 
@@ -720,6 +776,8 @@ python -m experiments.e6_drift            # E6: direct drift measurement
 python -m experiments.run_tabformer       # E7: download TabFormer first
 python -m experiments.analyse_tabformer
 python -m experiments.e8_disparate_impact # E8: disparate-impact audit
+python -m experiments.e9_loo_calibration  # E9: in-sample vs leave-one-out calibration
+python -m experiments.e8b_disparate_impact_loo  # E8b: E8 repeated on LOO FPR
 python -m web.build_data                  # rebuild this page's data
 </code></pre>
 <h3>Environment</h3>
@@ -805,7 +863,7 @@ function lineChart(svgId, legId, series, opts){
   const iw=W-M.l-M.r, ih=H-M.t-M.b;
   const allN=[].concat(...series.map(s=>s.n));
   const allY=[].concat(...series.map(s=>s.mean),
-    ...(opts.hline!==undefined?[opts.hline]:[]));
+    ...(opts.hline!==undefined?[opts.hline]:[])).filter(v=>v!==null&&isFinite(v));
   const y0=opts.y0!==undefined?opts.y0:0;
   const y1=Math.min(opts.ymax!==undefined?opts.ymax:1, Math.max(...allY)*1.12);
   const lx=v=>M.l+(Math.log10(v)-Math.log10(Math.min(...allN)))/
@@ -832,14 +890,19 @@ function lineChart(svgId, legId, series, opts){
     const col=C[s.key]||ink;
     if(s.lo&&s.hi){
       let up='',dn='';
-      s.n.forEach((n,i)=>{up+=`${lx(n)},${ly(s.hi[i])} `});
-      for(let i=s.n.length-1;i>=0;i--){dn+=`${lx(s.n[i])},${ly(s.lo[i])} `}
+      s.n.forEach((n,i)=>{if(s.hi[i]!==null)up+=`${lx(n)},${ly(s.hi[i])} `});
+      for(let i=s.n.length-1;i>=0;i--){if(s.lo[i]!==null)dn+=`${lx(s.n[i])},${ly(s.lo[i])} `}
       o+=`<polygon points="${up}${dn}" fill="${col}" opacity="0.13"/>`;
     }
-    let p='';
-    s.n.forEach((n,i)=>{p+=(i?'L':'M')+lx(n)+','+ly(s.mean[i])});
+    // null = undefined at this history size (e.g. precision when nothing is
+    // flagged): leave a gap in the line rather than plotting a fake zero.
+    let p='',pen=false;
+    s.n.forEach((n,i)=>{
+      if(s.mean[i]===null){pen=false;return}
+      p+=(pen?'L':'M')+lx(n)+','+ly(s.mean[i]);pen=true;
+    });
     o+=`<path d="${p}" fill="none" stroke="${col}" stroke-width="2.2" stroke-linejoin="round"/>`;
-    s.n.forEach((n,i)=>{o+=`<circle cx="${lx(n)}" cy="${ly(s.mean[i])}" r="3.4" fill="${col}"/>`});
+    s.n.forEach((n,i)=>{if(s.mean[i]!==null)o+=`<circle cx="${lx(n)}" cy="${ly(s.mean[i])}" r="3.4" fill="${col}"/>`});
   });
   svg.innerHTML=o;
   if(legId){
@@ -1014,6 +1077,38 @@ if(D.op) table('top',['n','Precision','Recall','F1','FPR','Flag rate'],
  (v,i)=>(i===5&&v>0.5)||(i===4&&v>0.5)?`<span class="bad">${v}</span>`:
         (i===5&&v<0.2)?`<span class="good">${v}</span>`:v);
 
+/* ---- operating point, corrected (E9): leave-one-out calibration ---- */
+if(D.op_loo && D.op_loo.mahalanobis && D.op_loo.mahalanobis.loo){
+  const L=D.op_loo.mahalanobis.loo, I=D.op_loo.mahalanobis.insample;
+  table('toploo',['n','Flag rate (LOO)','FPR (LOO)','Recall (LOO)','Precision (LOO)','Flag rate (in-sample)'],
+   L.n.map((n,i)=>{
+     const j=I.n.indexOf(n);
+     return [n,L.flag_rate[i],L.fpr[i],L.recall[i],L.precision[i],j>=0?I.flag_rate[j]:''];
+   }),
+   (v,i)=>v===null?'&mdash;':(i===2&&typeof v==='number'&&v>0&&v<=0.1)?`<span class="good">${v}</span>`:
+          (i===5&&typeof v==='number'&&v>0.5)?`<span class="bad">${v}</span>`:v);
+}else{
+  document.getElementById('toplocap').textContent='E9 leave-one-out results not found when this page was built.';
+}
+if(D.op_loo_full){
+  const LAB={'personal/gaussian_z':'Gaussian z','personal/robust_z':'Robust z','personal/mahalanobis':'Mahalanobis',
+    'personal/knn':'k-NN','personal/iforest':'Isolation Forest','personal/autoencoder':'Autoencoder',
+    'hybrid_shrinkage/mahalanobis':'Hybrid (shrinkage Mahalanobis)'};
+  const NS=[5,10,25,50,100,250], keys=Object.keys(LAB).filter(k=>D.op_loo_full[k]);
+  const at=(o,n,c)=>{const i=o.n.indexOf(n);return i>=0?o[c][i]:null};
+  const f3=v=>v===null?'&mdash;':v.toFixed(3);
+  table('toplofull',['Detector',...NS.map(n=>'n='+n)],
+    keys.map(k=>{const L=D.op_loo_full[k].loo,I=D.op_loo_full[k].insample;
+      return [LAB[k],...NS.map(n=>`${f3(at(L,n,'fpr'))} (${f3(at(I,n,'fpr'))})`)]}));
+  table('toplofullrec',['Detector',...NS.map(n=>'n='+n)],
+    keys.map(k=>{const L=D.op_loo_full[k].loo;return [LAB[k],...NS.map(n=>f3(at(L,n,'recall')))]}));
+  document.getElementById('toplofullcap').textContent=
+    'Cells where leave-one-out and in-sample differ most are the small-n Mahalanobis, autoencoder and hybrid rows. '+
+    'k-NN at n=5 is identical under both rules by construction (k = n).';
+}else{
+  document.getElementById('toplofullcap').textContent='E9 full-run results not found when this page was built.';
+}
+
 /* ---- threshold explorer ---- */
 function relThr(n,vals,f){
   const ref=Math.max(...vals), t=f*ref;
@@ -1178,7 +1273,13 @@ if(D.e8_tercile){
 }
 if(D.e8_corr){
   const lines=D.e8_corr.map(r=>`n=${r.history_size} ${r.variable}: ρ=${r.spearman_rho.toFixed(3)} (p Holm=${r.p_holm.toFixed(3)})`);
-  document.getElementById('e8cap').textContent='Spearman correlation, FPR vs. district variable, Holm-corrected: '+lines.join('; ');
+  document.getElementById('e8cap').textContent='In-sample FPR (first-draft rule; n=10 is at a ceiling). Spearman correlation, FPR vs. district variable, Holm-corrected: '+lines.join('; ');
+}
+if(D.e8b_corr){
+  table('te8b',['n','District variable','ρ','p (raw)','p (Holm)','Mean FPR (LOO)'],
+   D.e8b_corr.map(r=>[r.history_size,r.variable,r.spearman_rho.toFixed(3),r.p_raw.toFixed(3),r.p_holm.toFixed(3),r.mean_fpr.toFixed(3)]));
+  const k=D.e8b_corr.filter((r,i)=>i%3===0).map(r=>`n=${r.history_size}: p=${r.kruskal_region_p.toFixed(2)}`);
+  document.getElementById('e8bcap').textContent='Leave-one-out FPR, 300 accounts. Kruskal-Wallis across regions: '+k.join(', ')+'. Holm correction is applied within each history size over the three continuous variables only; the nine tests across sizes and variables are not jointly corrected.';
 }
 
 /* ---- cost table ---- */

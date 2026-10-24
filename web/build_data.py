@@ -30,6 +30,17 @@ TAB = "results/tables"
 OUT = "web/data.json"
 
 
+def _json_safe(o):
+    """Recursively replace non-finite floats with None (-> JSON null)."""
+    if isinstance(o, dict):
+        return {k: _json_safe(v) for k, v in o.items()}
+    if isinstance(o, (list, tuple)):
+        return [_json_safe(v) for v in o]
+    if isinstance(o, (float, np.floating)) and not np.isfinite(o):
+        return None
+    return o
+
+
 def read_csv(path, **kw):
     return pd.read_csv(path, **kw) if os.path.exists(path) else None
 
@@ -115,6 +126,41 @@ def main():
             "n": [int(x) for x in opg.index],
             **{c: [round(float(v), 3) for v in opg[c]] for c in ["precision", "recall", "f1", "fpr", "flag_rate"]},
         }
+
+        # ---- E9: in-sample vs leave-one-out calibration (corrects D["op"]) ----
+        e9 = read_csv(f"{RAW}/e9_loo_calibration.csv")
+        if e9 is not None:
+            op_loo = {}
+            for model, gm in e9.groupby("model"):
+                per_calib = {}
+                for calib, gc in gm.groupby("calib"):
+                    agg = gc.groupby("n").agg(
+                        precision=("precision", "mean"), recall=("recall", "mean"),
+                        f1=("f1", "mean"), fpr=("fpr", "mean"), flag_rate=("flag_rate", "mean"),
+                    ).sort_index()
+                    per_calib[calib] = {
+                        "n": [int(x) for x in agg.index],
+                        **{c: [round(float(v), 3) for v in agg[c]] for c in
+                           ["precision", "recall", "f1", "fpr", "flag_rate"]},
+                    }
+                op_loo[model] = per_calib
+            D["op_loo"] = op_loo
+
+        # ---- E9 full run: all detectors + hybrid, 5 seeds, pooled ----
+        e9f = read_csv(f"{TAB}/e9_full_summary.csv")
+        if e9f is not None:
+            full = {}
+            for (arm, model), g in e9f.groupby(["arm", "model"]):
+                per_calib = {}
+                for calib, gc in g.groupby("calib"):
+                    gc = gc.sort_values("history_size")
+                    per_calib[calib] = {
+                        "n": [int(x) for x in gc.history_size],
+                        **{c: [None if pd.isna(v) else round(float(v), 3) for v in gc[c]]
+                           for c in ["fpr", "flag_rate", "recall"]},
+                    }
+                full[f"{arm}/{model}"] = per_calib
+            D["op_loo_full"] = full
 
         cost = e1_raw[e1_raw.arm == "personal"].groupby(["model", "history_size"])["cost_ms"].median()
         D["cost"] = {
@@ -229,6 +275,9 @@ def main():
     e8_corr = read_csv(f"{TAB}/e8_fpr_district_correlation.csv")
     if e8_corr is not None:
         D["e8_corr"] = e8_corr.round(4).to_dict("records")
+    e8b_corr = read_csv(f"{TAB}/e8b_fpr_district_correlation_loo.csv")
+    if e8b_corr is not None:
+        D["e8b_corr"] = e8b_corr.round(4).to_dict("records")
 
     # ---- Dataset facts (Explore the Data / Dataset section) ----
     # All aggregate/binned only -- no individual account's transaction
@@ -301,8 +350,12 @@ def main():
             paper_md = fh.read()
         D["paper_html"] = md_to_html(paper_md)
 
+    # NaN/Infinity are not valid JSON: the browser's JSON.parse rejects the
+    # whole blob if even one appears. A NaN here means "undefined / not
+    # reached" (e.g. precision when nothing is flagged), so emit null.
     with open(OUT, "w", encoding="utf-8") as fh:
-        json.dump(D, fh, separators=(",", ":"), ensure_ascii=False)
+        json.dump(_json_safe(D), fh, separators=(",", ":"), ensure_ascii=False,
+                  allow_nan=False)
     print(f"wrote {OUT}, {os.path.getsize(OUT):,} bytes, {len(D)} top-level keys")
     print(sorted(D.keys()))
 
