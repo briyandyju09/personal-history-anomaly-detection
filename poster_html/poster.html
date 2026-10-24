@@ -1,0 +1,1033 @@
+<!DOCTYPE html>
+<!-- Poster built from the ARIS landscape_4col template (adapted from posterly, MIT, (c) 2026 Ruishuo Chen). -->
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>How Much Personal History Is Enough?</title>
+
+<!-- MathJax v3 for inline equations. CDN by default; to go offline,
+     download a MathJax v3 release into ./mathjax/ and change the <script>
+     `src` below to "mathjax/es5/tex-svg.js". -->
+<script>
+  window.MathJax = {
+    tex: {
+      inlineMath: [['$', '$'], ['\\(', '\\)']],
+      displayMath: [['$$', '$$'], ['\\[', '\\]']],
+      packages: {'[+]': ['ams']}
+    },
+    svg: { fontCache: 'global' }
+  };
+</script>
+<script id="MathJax-script" async src="assets/mathjax/tex-svg.js"></script>
+
+<style>
+  /* =========================================================
+     CANVAS — A0 landscape, 1189 mm × 841 mm
+     ========================================================= */
+  @page { size: 1189mm 841mm; margin: 0; }
+
+  :root {
+    /* ===== DESIGN TOKENS ===== */
+
+    /* Primary accent (header underline, card-highlight bar, section nums, .keyword) */
+    --accent:        #2D5F8B;
+    --accent-deep:   #1F4566;
+    --accent-light:  #E8F1F8;
+    --accent-soft:   #D7E5F0;
+
+    /* Secondary accent for "ours / best" emphasis (table .ours row, "★" callouts) */
+    --gold:          #C9A24A;
+    --gold-soft:     #FFF7E0;
+
+    /* Text */
+    --text-primary:   #1A1A1A;
+    --text-secondary: #555555;
+    --text-muted:     #888888;
+
+    /* Backgrounds */
+    --bg-page:        #F6F2F0;
+    --bg-card:        #FFFFFF;
+    --bg-card-tint:   #FAFAFB;
+    --bg-emphasis:    var(--accent-light);
+
+    /* Borders */
+    --border-soft:    #D8D8D8;
+    --border-strong:  var(--accent);
+
+    /* Screen-only dark mat behind the poster (the off-canvas viewport
+       background). Print resets html/body to white, so this never reaches
+       paper; kept as a token so no color literal lives outside this block. */
+    --bg-viewport:    #2B2B2B;
+
+    /* Base unit. Print: 1mm; screen preview: 1.6px (~3.78px = 1mm at 96dpi). */
+    --u: 1.6px;
+
+    /* Font-size scale (9 archetypes). Every `font-size` in this template
+       references one of these. `calc(var(--fs-N) * k)` is permitted ONLY for
+       a COMPONENTS.md-defined variant (e.g. `.eqn--large`). */
+    --fs-1: calc(7.4 * var(--u));    /* micro label            */
+    --fs-2: calc(8.2 * var(--u));   /* small caption          */
+    --fs-3: calc(9 * var(--u));   /* caption / table        */
+    --fs-4: calc(9.8 * var(--u));   /* body text              */
+    --fs-5: calc(10.7 * var(--u));   /* equation / emphasis    */
+    --fs-6: calc(12.3 * var(--u));   /* subtitle               */
+    --fs-7: calc(13.1 * var(--u));   /* section title          */
+    --fs-8: calc(18 * var(--u));   /* banner number          */
+    --fs-9: calc(26.2 * var(--u));   /* main title             */
+
+    /* Fonts. Override at :root if your venue mandates a specific family. */
+    --font-serif: "Charter", "Source Serif Pro", "Georgia", serif;
+    --font-sans:  "Inter", "Helvetica Neue", sans-serif;
+
+
+    /* Shadows & watermark ink — tokenized so rules 1/3 stay literal-free
+       (the faint radial page tint is the ONE allowed literal outside this
+       block; rule 5 validates it). */
+    --shadow-screen: 0 0 60px rgba(0, 0, 0, 0.5);
+    --shadow-card: 0 calc(2 * var(--u)) calc(6 * var(--u)) rgba(45, 95, 139, 0.05);
+    --ornament-ink: rgba(45, 95, 139, 0.06);
+    /* ===== END DESIGN TOKENS ===== */
+  }
+
+  /* =========================================================
+     RESET + BASE
+     ========================================================= */
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  html, body {
+    background: var(--bg-viewport);
+    font-family: var(--font-serif);
+    color: var(--text-primary);
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* =========================================================
+     UTILITY CLASSES — replace inline `style=` in the body markup.
+     The template (and any finished poster) must carry ZERO `style=`
+     attributes. Use these classes instead. Two documented exceptions
+     exist ONLY as examples and may appear in comments, never live:
+       - a logo/seal SVG flagged data-color-exempt="logo"
+       - a paper figure `<img ... data-source="paper" style="width: NN%">`
+         (AR width tweak; prefer the .w-NN classes below where possible)
+     ========================================================= */
+
+  /* Poster container — exact print dimensions; data-measure-role="poster" so poster_check.py
+     can verify the canvas size. */
+  .poster {
+    width: calc(1189 * var(--u));
+    height: calc(841 * var(--u));
+    background: var(--bg-page);
+    /* Page tint kept (radial only, all color stops alpha <= 0.06 per the
+       de-gradient policy: linear-gradient is banned, this low-alpha radial
+       wash is the single allowed exception). */
+    background-image:
+      radial-gradient(ellipse at top left,    rgba(45, 95, 139, 0.06), transparent 40%),
+      radial-gradient(ellipse at bottom right, rgba(201, 162, 74, 0.05), transparent 50%);
+    margin: 20px auto;
+    padding: calc(10 * var(--u)) calc(14 * var(--u));
+    display: grid;
+    grid-template-rows: auto auto 1fr auto auto;  /* header | banner | body | takeaways | footer */
+    gap: calc(6 * var(--u));
+    box-shadow: var(--shadow-screen);
+    position: relative;
+    overflow: hidden;
+  }
+
+  /* Decorative top bar — flat solid accent (de-gradient). */
+  .poster::before {
+    content: "";
+    position: absolute; top: 0; left: 0; right: 0;
+    height: calc(8 * var(--u));
+    background: var(--accent);
+  }
+
+  /* =========================================================
+     HEADER
+     ========================================================= */
+  .header {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    align-items: center;
+    gap: calc(16 * var(--u));
+    padding: calc(2 * var(--u)) calc(4 * var(--u)) calc(5 * var(--u));
+    border-bottom: calc(2 * var(--u)) solid var(--accent);
+  }
+
+  .venue-badge {
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    min-width: calc(95 * var(--u));
+    text-align: center;
+    border-right: calc(1 * var(--u)) solid var(--border-soft);
+    padding-right: calc(12 * var(--u));
+  }
+  .venue-badge .vb-venue {
+    font-family: var(--font-sans);
+    font-weight: 800;
+    font-size: var(--fs-9);
+    color: var(--accent-deep);
+    line-height: 1;
+    letter-spacing: -0.5px;
+  }
+  .venue-badge .vb-year {
+    font-family: var(--font-sans);
+    font-size: var(--fs-5);
+    color: var(--text-secondary);
+    margin-top: calc(3 * var(--u));
+    letter-spacing: 1.2px;
+  }
+  .venue-badge .vb-tag {
+    font-family: var(--font-sans);
+    font-size: var(--fs-2);
+    color: var(--accent);
+    font-weight: 700;
+    margin-top: calc(2 * var(--u));
+    letter-spacing: 1.2px;
+  }
+
+  .title-block { text-align: center; min-width: 0; }
+  .title {
+    font-family: var(--font-sans);
+    font-weight: 800;
+    font-size: var(--fs-9);
+    line-height: 1.05;
+    color: var(--accent-deep);
+    letter-spacing: -0.5px;
+  }
+  .title .accent { color: var(--gold); }
+  .subtitle {
+    font-family: var(--font-sans);
+    font-weight: 500;
+    font-size: var(--fs-6);
+    color: var(--text-secondary);
+    margin-top: calc(2 * var(--u));
+    font-style: italic;
+  }
+  .authors-line {
+    font-family: var(--font-sans);
+    font-size: var(--fs-4);
+    color: var(--accent);
+    font-weight: 600;
+    margin-top: calc(3 * var(--u));
+  }
+  .authors-line .author { margin: 0 calc(4 * var(--u)); }
+  .authors-line sup { font-size: 0.7em; color: var(--accent); }
+  .authors-line .aff {
+    color: var(--text-secondary);
+    font-weight: 400;
+    display: block;
+    margin-top: calc(2 * var(--u));
+    font-size: var(--fs-4);
+  }
+
+  .right-block {
+    display: flex; align-items: center;
+    gap: calc(10 * var(--u));
+  }
+  .qr-block { display: flex; flex-direction: column; align-items: center; gap: calc(2 * var(--u)); }
+  .qr-block img {
+    width: calc(58 * var(--u));
+    height: calc(58 * var(--u));
+    border: calc(2 * var(--u)) solid var(--accent);
+    border-radius: calc(4 * var(--u));
+    background: white;
+    padding: calc(2 * var(--u));
+  }
+  .qr-label {
+    font-family: var(--font-sans);
+    font-size: var(--fs-3);
+    color: var(--accent);
+    font-weight: 600;
+  }
+  /* Optional logo slot — drop your lab logo here. Keep its rendered height
+     close to the QR (~85u) so the header doesn't grow disproportionately.
+     A raster logo needs no exemption. An inline-SVG logo with brand colors
+     must carry data-color-exempt="logo" so style_check skips its fills, e.g.:
+       <svg data-color-exempt="logo" ...> ... </svg> */
+  .logo-slot img { height: calc(85 * var(--u)); width: auto; display: block; }
+  /* logo-row: institution logos in the header right block (REAL logos the
+     user provided — never fabricate a seal). Each img MUST carry
+     data-color-exempt="logo"; height pairs with the QR. */
+  .logo-row { display: flex; align-items: center; gap: calc(5 * var(--u)); }
+  .logo-row img { height: calc(68 * var(--u)); width: auto; display: block; }
+  /* --boxed variant: each logo in a labeled tile (logo + institution name) —
+     more presence at poster distance; white tile + soft border, no new hues. */
+  .logo-row .lr-item {
+    display: flex; flex-direction: column; align-items: center;
+    gap: calc(2 * var(--u));
+    background: var(--bg-card);
+    border: 1px solid var(--border-soft);
+    border-radius: calc(3 * var(--u));
+    padding: calc(4 * var(--u)) calc(6 * var(--u));
+  }
+  .logo-row .lr-item img { height: calc(58 * var(--u)); }
+  .logo-row .lr-label {
+    font-family: var(--font-sans); font-weight: 600; font-size: var(--fs-1);
+    color: var(--text-secondary); text-align: center; line-height: 1.15;
+  }
+  /* venue badge may carry the official venue logo above its text line */
+  .venue-badge img { height: calc(62 * var(--u)); width: auto; display: block; margin: 0 auto calc(2 * var(--u)); }
+  .venue-badge .vb-title { font-family: var(--font-sans); font-weight: 800; font-size: var(--fs-5); color: var(--accent-deep); letter-spacing: 0.5px; }
+
+  /* =========================================================
+     OPTIONAL FRAMEWORK BANNER (set display:none if you don't need it)
+     ========================================================= */
+  .framework-banner {
+    display: flex;
+    align-items: center;
+    gap: calc(16 * var(--u));
+    /* Flat solid emphasis fill (de-gradient). */
+    background: var(--bg-emphasis);
+    border: calc(1 * var(--u)) solid var(--border-soft);
+    border-left: calc(6 * var(--u)) solid var(--accent);
+    border-radius: calc(6 * var(--u));
+    padding: calc(6 * var(--u)) calc(14 * var(--u));
+  }
+  .framework-banner img { height: calc(120 * var(--u)); width: auto; display: block; }
+  .framework-banner .banner-stats {
+    flex: 1;
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: calc(6 * var(--u));
+  }
+  .framework-banner .bs-item {
+    background: white;
+    border: calc(1 * var(--u)) solid var(--border-soft);
+    border-left: calc(3 * var(--u)) solid var(--accent);
+    border-radius: calc(3 * var(--u));
+    padding: calc(2 * var(--u)) calc(8 * var(--u));
+    text-align: center;
+  }
+  .framework-banner .bs-num {
+    font-family: var(--font-sans);
+    font-weight: 800;
+    font-size: var(--fs-8);
+    color: var(--accent);
+    line-height: 1;
+  }
+  .framework-banner .bs-label {
+    font-family: var(--font-sans);
+    font-size: var(--fs-3);
+    color: var(--text-secondary);
+    margin-top: calc(2 * var(--u));
+    line-height: 1.2;
+  }
+  .framework-banner .fb-text {
+    flex: 0.7;
+    font-family: var(--font-serif);
+    font-size: var(--fs-6);
+    line-height: 1.5;
+    text-wrap: balance;
+    text-align: center;
+  }
+  .framework-banner .fb-text strong { color: var(--accent-deep); }
+  .framework-banner .fb-label {
+    display: inline-block;
+    background: var(--accent);
+    color: white;
+    font-family: var(--font-sans);
+    font-size: var(--fs-5);
+    font-weight: 700;
+    padding: calc(2 * var(--u)) calc(8 * var(--u));
+    border-radius: calc(4 * var(--u));
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    vertical-align: middle;
+    line-height: 1;
+    position: relative;
+    top: calc(-1 * var(--u));
+  }
+
+  /* =========================================================
+     BODY: 4 columns, variable-width hint via fr values
+     ========================================================= */
+  .body-grid {
+    display: grid;
+    grid-template-columns: 1fr 1.05fr 1.05fr 1fr;
+    gap: calc(10 * var(--u));
+    /* No overflow:hidden here — it would clip card shadows (pitfall #6).
+       .poster already clips at the page boundary; min-height:0 is the
+       grid-blowout guard. */
+    min-height: 0;
+  }
+  .column {
+    display: flex; flex-direction: column;
+    gap: calc(6 * var(--u));
+    min-height: 0;
+    height: 100%;
+    padding-bottom: calc(4 * var(--u));   /* shadow breathing room above takeaways */
+  }
+
+  /* =========================================================
+     CARDS
+     ========================================================= */
+  .card {
+    background: var(--bg-card);
+    border-radius: calc(5 * var(--u));
+    padding: calc(4 * var(--u)) calc(9 * var(--u));
+    border: calc(1 * var(--u)) solid var(--border-soft);
+    box-shadow: var(--shadow-card);
+    position: relative;
+  }
+  .card.tinted    { background: var(--bg-card-tint); }
+  .card.highlight {
+    border-left: calc(6 * var(--u)) solid var(--accent);
+    /* Flat emphasis tint (de-gradient). */
+    background: var(--bg-emphasis);
+  }
+
+  .section-title {
+    font-family: var(--font-sans);
+    font-weight: 700;
+    font-size: var(--fs-7);
+    color: var(--accent-deep);
+    margin-bottom: calc(3 * var(--u));
+    display: flex; align-items: center;
+    gap: calc(5 * var(--u));
+    flex-wrap: wrap;
+  }
+  .section-title .num {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: calc(22 * var(--u)); height: calc(22 * var(--u));
+    background: var(--accent); color: white;
+    border-radius: 50%;
+    font-size: var(--fs-5); font-weight: 700;
+    flex-shrink: 0;
+  }
+  /* Inline "★ KEY" / "★ Headline" marker beside a section title. */
+  .section-title .key-mark { color: var(--gold); font-size: var(--fs-3); }
+
+  .body-text, .card p, .card li {
+    font-family: var(--font-serif);
+    font-size: var(--fs-4);
+    line-height: 1.3;
+    color: var(--text-primary);
+  }
+  .card ul, .card ol { padding-left: calc(18 * var(--u)); }
+  .card li { margin-bottom: calc(2 * var(--u)); }
+
+  .keyword       { color: var(--accent); font-weight: 700; }
+  .keyword-gold  { color: var(--gold);   font-weight: 700; }
+  .highlight-text {
+    background: var(--bg-emphasis);
+    padding: 0 calc(3 * var(--u));
+    border-radius: calc(2 * var(--u));
+  }
+
+  /* Equation block */
+  .eqn {
+    background: var(--bg-emphasis);
+    border-left: calc(3 * var(--u)) solid var(--accent);
+    padding: calc(4 * var(--u)) calc(10 * var(--u));
+    margin: calc(4 * var(--u)) 0;
+    font-size: var(--fs-5);
+    overflow-x: hidden;
+  }
+  /* Predefined variant for a larger / more legible display equation.
+     `calc(var(--fs-N) * k)` is allowed here because this is a
+     COMPONENTS.md-registered variant (DESIGN_FINAL §A / §10 f). */
+  .eqn--large { font-size: calc(var(--fs-5) * 1.25); }
+  .eqn .label {
+    display: block;
+    font-family: var(--font-sans);
+    font-size: var(--fs-2);
+    color: var(--accent);
+    font-weight: 600;
+    margin-bottom: calc(2 * var(--u));
+    text-transform: uppercase;
+    letter-spacing: 1px;
+  }
+
+  /* Callout: solid accent for primary, solid gold for theorems / "★ key" strips */
+  .callout {
+    background: var(--accent);
+    color: white;
+    padding: calc(5 * var(--u)) calc(10 * var(--u));
+    border-radius: calc(4 * var(--u));
+    font-size: var(--fs-4);
+    margin: calc(4 * var(--u)) 0;
+  }
+  .callout strong { color: var(--gold); }
+  /* Flat solid gold (de-gradient). */
+  .callout.gold {
+    background: var(--gold);
+    color: var(--accent-deep);
+  }
+  .callout.gold strong { color: var(--accent-deep); }
+
+  /* Figure container */
+  .figure { margin: calc(4 * var(--u)) 0; text-align: center; }
+  .figure img:not([class*="w-"]) { width: 100%; }
+  .figure img {
+    border-radius: calc(4 * var(--u));
+    border: calc(1 * var(--u)) solid var(--border-soft);
+    background: white;
+  }
+  .figure .caption {
+    font-family: var(--font-sans);
+    font-size: var(--fs-3);
+    color: var(--text-secondary);
+    margin-top: calc(3 * var(--u));
+    line-height: 1.3;
+    text-align: left;
+  }
+  .figure .caption strong { color: var(--accent-deep); }
+
+  /* Result table with .ours row highlighted gold */
+  .result-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-family: var(--font-sans);
+    font-size: var(--fs-3);
+    margin-top: calc(3 * var(--u));
+  }
+  .result-table th, .result-table td {
+    padding: calc(2 * var(--u)) calc(4 * var(--u));
+    text-align: center;
+    border-bottom: calc(1 * var(--u)) solid var(--border-soft);
+  }
+  .result-table thead th {
+    background: var(--accent); color: white;
+    font-weight: 600; font-size: var(--fs-2);
+  }
+  .result-table tbody tr.group-row td {
+    background: var(--bg-emphasis); font-weight: 700;
+    text-align: left;
+    color: var(--accent-deep);
+    padding-left: calc(8 * var(--u));
+    border-bottom: calc(2 * var(--u)) solid var(--accent);
+  }
+  .result-table tbody tr.ours td { background: var(--gold-soft); font-weight: 700; }
+  .result-table tbody tr.ours td:first-child { color: var(--accent-deep); }
+  /* Greyed reference row (was inline color:#888). */
+  .result-table tbody tr.reference td { color: var(--text-muted); }
+  .result-table .method { text-align: left; padding-left: calc(8 * var(--u)); }
+  .result-table .best { color: var(--accent); font-weight: 700; }
+
+  /* 3-up stat box */
+  .keybox {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: calc(4 * var(--u));
+    margin: calc(4 * var(--u)) 0 0;
+  }
+  .keybox .kb-item {
+    background: var(--bg-emphasis);
+    border-top: calc(2 * var(--u)) solid var(--accent);
+    padding: calc(3 * var(--u));
+    text-align: center;
+    border-radius: 0 0 calc(3 * var(--u)) calc(3 * var(--u));
+  }
+  .kb-item .kb-num {
+    font-family: var(--font-sans);
+    font-weight: 800;
+    font-size: var(--fs-6);
+    color: var(--accent);
+    line-height: 1;
+  }
+  .kb-item .kb-label {
+    font-family: var(--font-sans);
+    font-size: var(--fs-1);
+    color: var(--text-secondary);
+    margin-top: calc(2 * var(--u));
+    line-height: 1.1;
+  }
+
+  /* Optional takeaways strip (delete the section if not needed) */
+  .takeaways-strip {
+    display: grid;
+    grid-template-columns: auto repeat(4, 1fr);
+    align-items: center;
+    gap: calc(10 * var(--u));
+    /* Flat solid emphasis fill (de-gradient). */
+    background: var(--bg-emphasis);
+    border: calc(1 * var(--u)) solid var(--border-soft);
+    border-radius: calc(5 * var(--u));
+    padding: calc(8 * var(--u)) calc(12 * var(--u));
+  }
+  .takeaways-strip .ts-title {
+    font-family: var(--font-sans);
+    font-size: var(--fs-6);
+    font-weight: 800;
+    color: var(--accent-deep);
+    display: flex; align-items: center; gap: calc(6 * var(--u));
+  }
+  .takeaways-strip .ts-title .num {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: calc(22 * var(--u)); height: calc(22 * var(--u));
+    background: var(--accent); color: white;
+    border-radius: 50%;
+    font-size: var(--fs-5); font-weight: 700;
+  }
+  .takeaways-strip .ts-item {
+    border-left: calc(3 * var(--u)) solid var(--accent);
+    padding-left: calc(8 * var(--u));
+    line-height: 1.3;
+    text-align: center;
+    text-wrap: balance;
+  }
+  .takeaways-strip .ts-key {
+    font-family: var(--font-sans);
+    font-size: var(--fs-3);
+    font-weight: 700;
+    color: var(--accent);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+  }
+  .takeaways-strip .ts-text {
+    font-family: var(--font-serif);
+    font-size: var(--fs-4);
+    margin-left: calc(4 * var(--u));
+  }
+
+  /* Footer */
+  .footer {
+    grid-column: 1 / -1;
+    display: flex; justify-content: space-between; align-items: center;
+    padding-top: calc(8 * var(--u));
+    border-top: calc(1 * var(--u)) solid var(--border-soft);
+    font-family: var(--font-sans);
+    font-size: var(--fs-5);
+    color: var(--text-muted);
+  }
+  .footer .method-name { color: var(--accent-deep); }
+  .footer .repo { color: var(--accent); font-weight: 600; }
+
+  /* Optional watermark */
+  .ornament {
+    position: absolute;
+    right: calc(20 * var(--u));
+    bottom: calc(20 * var(--u));
+    font-family: var(--font-sans);
+    font-size: var(--fs-9);
+    color: var(--ornament-ink);
+    font-weight: 900;
+    letter-spacing: 4px;
+    pointer-events: none;
+    user-select: none;
+  }
+
+  /* =========================================================
+     DENSITY COMPONENTS (catalogued — see COMPONENTS.md).
+     Guardrail: no component-local color semantics. Distinction is
+     carried by labels, order and typography — never by new hues.
+     ========================================================= */
+  /* equation-stack: compact multi-row formula stack (denser than one big .eqn) */
+  .equation-stack { margin: calc(2 * var(--u)) 0; }
+  .equation-stack .eqn { margin: calc(2 * var(--u)) 0; padding: calc(2 * var(--u)) calc(8 * var(--u)); }
+
+  /* eqn-anatomy: term-by-term anatomy grid (2x2 default; --row variant = 1x4) */
+  .eqn-anatomy {
+    display: grid; grid-template-columns: 1fr 1fr;
+    gap: calc(2.5 * var(--u)); margin: calc(3 * var(--u)) 0;
+  }
+  .eqn-anatomy.eqn-anatomy--row { grid-template-columns: repeat(4, 1fr); }
+  .eqn-anatomy .ea-item {
+    background: var(--bg-card-tint);
+    border: 1px solid var(--border-soft);
+    border-left: calc(2 * var(--u)) solid var(--accent);
+    border-radius: calc(2 * var(--u));
+    padding: calc(2 * var(--u)) calc(4 * var(--u));
+    font-size: var(--fs-2); line-height: 1.3;
+  }
+  .eqn-anatomy .ea-tag {
+    display: inline-block; font-family: var(--font-sans); font-weight: 700;
+    font-size: var(--fs-1); color: var(--accent-deep);
+    background: var(--accent-light); border-radius: calc(1.5 * var(--u));
+    padding: calc(0.5 * var(--u)) calc(2.5 * var(--u));
+    margin-right: calc(1.5 * var(--u));
+  }
+
+  /* flow-strip: labeled pipeline, ALL steps the same accent; ONLY the
+     final step may carry the gold top bar. Not an "algorithm" unless the
+     paper has one — see COMPONENTS.md. */
+  .flow-strip { display: flex; align-items: stretch; gap: calc(1.5 * var(--u)); margin: calc(3 * var(--u)) 0; }
+  .flow-strip .step {
+    flex: 1; background: var(--accent-light);
+    border: 1px solid var(--accent-soft); border-radius: calc(2 * var(--u));
+    padding: calc(2 * var(--u)) calc(2.5 * var(--u));
+    text-align: center; font-size: var(--fs-2); line-height: 1.25;
+  }
+  .flow-strip .step .step-name {
+    display: block; font-family: var(--font-sans); font-weight: 700;
+    font-size: var(--fs-1); color: var(--accent-deep);
+    letter-spacing: 0.5px; text-transform: uppercase;
+    margin-bottom: calc(1 * var(--u));
+  }
+  .flow-strip .step--final { border-top: calc(1.5 * var(--u)) solid var(--gold); background: var(--gold-soft); }
+  .flow-strip .arrow {
+    align-self: center; color: var(--accent);
+    font-family: var(--font-sans); font-weight: 700; font-size: var(--fs-4);
+    flex: 0 0 auto;
+  }
+
+  /* figure--duo: two paper figures sharing one caption; each img MUST be
+     a data-source="paper" asset and carry .w-45/.w-50 (42-48% each). */
+  .figure--duo { display: flex; gap: calc(3 * var(--u)); align-items: flex-start; justify-content: center; }
+  .figure--duo img { max-width: 48%; min-width: 0; }  /* hard cap: duo contract is 42-48% each; an oversized w-NN cannot overflow the card */
+
+  /* result-table derived column (gold-soft = DERIVED arithmetic; label it) */
+  .result-table th.derived, .result-table td.derived {
+    background: var(--gold-soft); font-family: var(--font-sans); font-weight: 700;
+  }
+
+  /* keybox 4-up variant */
+  .keybox.keybox--4 { grid-template-columns: repeat(4, 1fr); }
+
+  /* algo: compact numbered procedure — ONLY when the paper itself states
+     an explicit algorithm/procedure; never invent steps. */
+  ol.algo { padding-left: calc(16 * var(--u)); }
+  ol.algo li { margin-bottom: calc(1.5 * var(--u)); font-size: var(--fs-3); line-height: 1.3; }
+
+  /* claim-pills: provenance mini-table (numeric-heavy posters only) */
+  .claim-pills { width: 100%; border-collapse: collapse; font-family: var(--font-sans); font-size: var(--fs-2); }
+  .claim-pills td {
+    border-bottom: 1px solid var(--border-soft);
+    padding: calc(1.5 * var(--u)) calc(3 * var(--u));
+  }
+  .claim-pills .cp-id {
+    font-weight: 700; color: var(--accent-deep); background: var(--accent-light);
+    border-radius: calc(1.5 * var(--u)); padding: 0 calc(2.5 * var(--u)); white-space: nowrap;
+  }
+  .claim-pills .cp-fact { color: var(--accent-deep); font-weight: 700; }
+  .claim-pills .cp-derived { color: var(--gold); font-weight: 700; }
+
+  /* Grid-blowout guards: (1) columns may shrink below min-content so a
+     wide equation can never widen its track and squeeze siblings;
+     (2) over-wide display math scales down to fit its box instead of
+     blowing out the card (SVG keeps aspect via height:auto). */
+  .body-grid > .column { min-width: 0; }
+  .card { min-width: 0; }
+  .eqn mjx-container > svg { max-width: 100%; height: auto; }
+
+  /* ── Utility classes — defined LAST so equal-specificity ties
+     resolve in the utility's favor (source order). ── */
+  .fs-1 { font-size: var(--fs-1); }
+  .fs-2 { font-size: var(--fs-2); }
+  .fs-3 { font-size: var(--fs-3); }
+  .fs-4 { font-size: var(--fs-4); }
+  .fs-5 { font-size: var(--fs-5); }
+  .fs-6 { font-size: var(--fs-6); }
+  .fs-7 { font-size: var(--fs-7); }
+  .fs-8 { font-size: var(--fs-8); }
+  .fs-9 { font-size: var(--fs-9); }
+
+  .mt-1 { margin-top: calc(1 * var(--u)); }
+  .mt-2 { margin-top: calc(2 * var(--u)); }
+  .mt-3 { margin-top: calc(3 * var(--u)); }
+  .mt-4 { margin-top: calc(4 * var(--u)); }
+  .mt-5 { margin-top: calc(5 * var(--u)); }
+  .mt-6 { margin-top: calc(6 * var(--u)); }
+
+  .mb-1 { margin-bottom: calc(1 * var(--u)); }
+  .mb-2 { margin-bottom: calc(2 * var(--u)); }
+  .mb-3 { margin-bottom: calc(3 * var(--u)); }
+  .mb-4 { margin-bottom: calc(4 * var(--u)); }
+
+  .w-45  { width: 45%; }
+  .w-50  { width: 50%; }
+  .w-55  { width: 55%; }
+  .w-60  { width: 60%; }
+  .w-65  { width: 65%; }
+  .w-70  { width: 70%; }
+  .w-75  { width: 75%; }
+  .w-80  { width: 80%; }
+  .w-85  { width: 85%; }
+  .w-90  { width: 90%; }
+  .w-95  { width: 95%; }
+  .w-100 { width: 100%; }
+
+  .text-secondary { color: var(--text-secondary); }
+  .text-muted     { color: var(--text-muted); }
+  .nowrap         { white-space: nowrap; }
+  .text-center    { text-align: center; }
+
+  /* =========================================================
+     PRINT OVERRIDE — KEEP LAST so it wins source-order ties.
+     ========================================================= */
+  @media print {
+    html, body { background: white; }
+    .poster { margin: 0; box-shadow: none; width: 1189mm; height: 841mm; page-break-after: avoid; }
+    :root { --u: 1mm; }
+  }
+</style>
+</head>
+<body>
+
+<div class="poster" data-measure-role="poster">
+
+  <!-- =========================== HEADER =========================== -->
+  <header class="header" data-measure-role="header">
+    <div class="title-block">
+      <h1 class="title">How Much Personal History <span class="accent">Is Enough?</span></h1>
+      <div class="subtitle">Measuring the data requirement for individualised financial behavioural anomaly detection</div>
+      <div class="authors-line">
+        <span class="author">Briyan George Dyju</span>
+        <span class="aff">Independent Researcher &middot; Dubai, United Arab Emirates</span>
+      </div>
+    </div>
+    <div class="right-block">
+      <div class="qr-block">
+        <img src="assets/qr/qr_paper.png" alt="QR code linking to briyan.xyz/research">
+        <div class="qr-label">briyan.xyz/research</div>
+      </div>
+    </div>
+  </header>
+
+  <!-- ============================ BANNER ============================ -->
+  <section class="framework-banner" data-measure-role="banner">
+    <div class="fb-text">
+      <span class="fb-label">Question</span>
+      &nbsp;<strong>How many of a person's own transactions</strong> does a detector need before the personal baseline is worth using?
+    </div>
+    <div class="banner-stats">
+      <div class="bs-item"><div class="bs-num">25</div><div class="bs-label">transactions reach 90%<br>of best PR-AUC (Berka)</div></div>
+      <div class="bs-item"><div class="bs-num">10</div><div class="bs-label">transactions: the personal model<br>starts to beat the crowd</div></div>
+      <div class="bs-item"><div class="bs-num nowrap">96% &rarr; 1.2%</div><div class="bs-label">flagged at n = 10: in-sample<br>vs leave-one-out threshold</div></div>
+      <div class="bs-item"><div class="bs-num">5 of 5</div><div class="bs-label">independent cohort draws give<br>the same 25-transaction threshold</div></div>
+    </div>
+  </section>
+
+  <!-- ============================ BODY ============================ -->
+  <div class="body-grid" data-measure-role="body">
+
+    <!-- ============ COLUMN 1 ============ -->
+    <div class="column" data-measure-role="column">
+
+      <div class="card highlight" data-measure-role="card">
+        <div class="section-title"><span class="num">1</span> Motivation</div>
+        <p class="body-text">
+          A personalised detector scores each transaction against <span class="keyword">one person's own history</span>. When an account opens, that history is empty.
+        </p>
+        <ul class="mt-2">
+          <li>Deployed systems filter out &ldquo;unseasoned users&rdquo;</li>
+          <li>The cutoff is assumed, not measured</li>
+          <li>We found no published measurement of it</li>
+          <li>Thin histories: new customers, young people, recent immigrants</li>
+        </ul>
+        <div class="callout mt-4">
+          <strong>Q:</strong> Where does the personal baseline become worth using?
+        </div>
+      </div>
+
+      <div class="card" data-measure-role="card">
+        <div class="section-title"><span class="num">2</span> Protocol</div>
+        <p class="body-text">
+          Hold a 60-transaction window fixed. Train on the <span class="keyword">n</span> transactions just before it.
+        </p>
+        <div class="flow-strip">
+          <div class="step"><span class="step-name">Train</span>n personal transactions</div>
+          <div class="arrow">&rarr;</div>
+          <div class="step"><span class="step-name">Hold out</span>the same 60-transaction window</div>
+          <div class="arrow">&rarr;</div>
+          <div class="step"><span class="step-name">Label</span>swap in a stranger's transaction</div>
+          <div class="arrow">&rarr;</div>
+          <div class="step step--final"><span class="step-name">Read off</span>smallest n reaching 90%</div>
+        </div>
+        <ul class="mt-1">
+          <li>Paired: every n scored on the same window</li>
+          <li>Labels by provenance, not by any detector</li>
+          <li>10% injected: six anomalies per window</li>
+          <li>Population model: fitted on 400 donor accounts</li>
+        </ul>
+      </div>
+
+      <div class="card" data-measure-role="card">
+        <div class="section-title"><span class="num">3</span> Three data layers</div>
+        <table class="result-table">
+          <thead>
+            <tr><th class="method">Layer</th><th>Entities</th><th>Nature</th></tr>
+          </thead>
+          <tbody>
+            <tr class="ours"><td class="method">Berka bank</td><td>300 accounts</td><td>real</td></tr>
+            <tr><td class="method">Simulation</td><td>240 people</td><td>controlled</td></tr>
+            <tr><td class="method">TabFormer</td><td>300 entities</td><td>synthetic</td></tr>
+          </tbody>
+        </table>
+        <p class="body-text mt-2 fs-3">
+          Six unsupervised detectors on each layer: Mahalanobis, k-NN, isolation forest, autoencoder and two z-scores.
+        </p>
+      </div>
+
+      <div class="card" data-measure-role="card">
+        <div class="section-title"><span class="num">4</span> Limits and ethics</div>
+        <ul>
+          <li>One bank, 1993&ndash;1998; the second dataset is synthetic</li>
+          <li>A flag is a deviation, not fraud</li>          <li>District-level audit: no Holm-significant false-positive gap; age, tenure and immigration untested</li>
+        </ul>
+      </div>
+
+    </div>
+
+    <!-- ============ COLUMN 2 ============ -->
+    <div class="column" data-measure-role="column">
+
+      <div class="card highlight" data-measure-role="card">
+        <div class="section-title"><span class="num">5</span> Sufficiency point <span class="key-mark">&#9733; Headline</span></div>
+        <p class="body-text fs-3 text-secondary mb-1">
+          Berka, 300 accounts, impostor labels. Prevalence baseline 0.10.
+        </p>
+        <div class="figure">
+          <img src="assets/paper_figures/fig_berka_curves.png" data-source="paper" data-asset-id="fig_berka_curves" style="width: 95.4%" alt="PR-AUC against personal history size for six detectors on Berka">
+          <div class="caption fs-2">
+            <strong>PR-AUC against n.</strong> Mahalanobis rises steeply and saturates; k-NN jumps between 25 and 50; both z-scores never learn.
+          </div>
+        </div>
+        <div class="keybox">
+          <div class="kb-item"><div class="kb-num">25</div><div class="kb-label">transactions to reach<br>90% of best</div></div>
+          <div class="kb-item"><div class="kb-num">0.657</div><div class="kb-label">best PR-AUC<br>(Mahalanobis)</div></div>
+          <div class="kb-item"><div class="kb-num">98%</div><div class="kb-label">of the gain<br>arrives by n = 50</div></div>
+        </div>
+      </div>
+
+      <div class="card" data-measure-role="card">
+        <div class="section-title"><span class="num">6</span> Three definitions, three answers</div>
+        <table class="result-table">
+          <thead>
+            <tr><th class="method">Detector</th><th>y<sub>max</sub></th><th>&tau;</th><th>Rel-90</th><th>Rel-95</th></tr>
+          </thead>
+          <tbody>
+            <tr class="ours"><td class="method">Mahalanobis</td><td class="best">0.658</td><td>11.5</td><td class="best">25</td><td class="best">25</td></tr>
+            <tr><td class="method">Autoencoder</td><td>0.518</td><td>11.1</td><td>25</td><td>25</td></tr>
+            <tr><td class="method">k-NN</td><td>0.633</td><td>50.9</td><td>100</td><td>250</td></tr>
+            <tr><td class="method">Isolation forest</td><td>0.350</td><td>71.2</td><td>250</td><td>250</td></tr>
+            <tr class="reference"><td class="method">Robust z</td><td>0.153</td><td>21.7</td><td>1</td><td>&mdash;</td></tr>
+            <tr class="reference"><td class="method">Gaussian z</td><td>0.170</td><td>0.25</td><td>1</td><td>&mdash;</td></tr>
+          </tbody>
+        </table>
+        <ul class="mt-3">
+          <li>Rel-90: smallest n reaching 90% of best</li>
+          <li>Stability criterion is never met by a detector that learns</li>
+          <li>Rel-90 rewards flat curves: robust z gives n = 1</li>
+        </ul>
+      </div>
+
+      <div class="card" data-measure-role="card">
+        <div class="section-title"><span class="num">7</span> Recency beats volume</div>
+        <div class="keybox">
+          <div class="kb-item"><div class="kb-num nowrap">0.647 &rarr; 0.642</div><div class="kb-label">50 to 250 transactions,<br>natural density</div></div>
+          <div class="kb-item"><div class="kb-num">&minus;0.036</div><div class="kb-label">same 50 drawn from<br>a 4&times; longer span</div></div>
+          <div class="kb-item"><div class="kb-num">&rho; = &minus;0.08</div><div class="kb-label">drift vs. loss<br>(Holm p = 0.32)</div></div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- ============ COLUMN 3 ============ -->
+    <div class="column" data-measure-role="column">
+
+      <div class="card highlight" data-measure-role="card">
+        <div class="section-title"><span class="num">8</span> Crowd or person? <span class="key-mark">&#9733; KEY</span></div>
+        <p class="body-text">
+          Below a crossover, a model built from <span class="keyword">400 other accounts</span> beats the person's own history.
+        </p>
+        <div class="figure">
+          <img src="assets/paper_figures/fig_arms.png" data-source="paper" data-asset-id="fig_arms" class="w-100" alt="Personal, global and shrinkage hybrid Mahalanobis PR-AUC against n">
+          <div class="caption fs-2">
+            <strong>Mahalanobis, Berka.</strong> Personal falls below global until n = 10; the hybrid tracks or beats both.
+          </div>
+        </div>
+        <div class="equation-stack">
+          <div class="eqn">
+            <span class="label">Shrinkage hybrid (&kappa; = 25, fixed in advance)</span>
+            $$\mu_h=\frac{n\,\mu_p+\kappa\,\mu_g}{n+\kappa}$$
+          </div>
+        </div>
+        <div class="eqn-anatomy">
+          <div class="ea-item"><span class="ea-tag">n</span> weight on the person</div>
+          <div class="ea-item"><span class="ea-tag">&kappa;</span> weight on the crowd</div>
+          <div class="ea-item"><span class="ea-tag">n = 0</span> the global model</div>
+          <div class="ea-item"><span class="ea-tag">n large</span> the personal model</div>
+        </div>
+        <div class="callout gold">
+          Crossover at n = 10 (Mahalanobis) and n = 50 (k-NN).
+        </div>
+      </div>
+
+      <div class="card" data-measure-role="card">
+        <div class="section-title"><span class="num">9</span> Calibration moves the operating point</div>
+        <p class="body-text fs-3 text-secondary mb-1">
+          Mahalanobis, nominal false-positive rate (FPR) 0.05. LOO = leave-one-out.
+        </p>
+        <table class="result-table">
+          <thead>
+            <tr><th>n</th><th>In-sample flag rate</th><th>LOO flag rate</th><th>LOO FPR</th><th>LOO recall</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>5</td><td>0.989</td><td>0.152</td><td>0.151</td><td>0.163</td></tr>
+            <tr><td>10</td><td class="best">0.960</td><td class="best">0.012</td><td>0.007</td><td>0.058</td></tr>
+            <tr><td>25</td><td>0.391</td><td>0.110</td><td class="best">0.066</td><td>0.503</td></tr>
+            <tr><td>50</td><td>0.251</td><td>0.126</td><td>0.073</td><td>0.612</td></tr>
+            <tr><td>100</td><td>0.196</td><td>0.134</td><td>0.076</td><td>0.658</td></tr>
+            <tr><td>250</td><td>0.162</td><td>0.136</td><td>0.080</td><td>0.647</td></tr>
+          </tbody>
+        </table>
+        <ul class="mt-2">
+          <li>In-sample scores are biased low by construction</li>
+          <li>LOO is silent at n = 10, near-nominal from n = 25</li>
+        </ul>
+      </div>
+
+    </div>
+
+    <!-- ============ COLUMN 4 ============ -->
+    <div class="column" data-measure-role="column">
+
+      <div class="card highlight" data-measure-role="card">
+        <div class="section-title"><span class="num">10</span> A second dataset reverses a ranking</div>
+        <div class="figure">
+          <img src="assets/paper_figures/fig_tabformer_curves.png" data-source="paper" data-asset-id="fig_tabformer_curves" style="width: 89.2%" alt="PR-AUC against n for six detectors on synthetic TabFormer card data">
+          <div class="caption fs-2">
+            <strong>TabFormer (synthetic).</strong> Same shape, later threshold; isolation forest is best at n = 5 to 50.
+          </div>
+        </div>
+        <ul>
+          <li>Mahalanobis threshold is 250, not 25</li>
+          <li>Isolation forest: worst on Berka, best at small n here</li>
+          <li>Crossover moves to n = 25&ndash;100 (stronger global model)</li>
+        </ul>
+      </div>
+
+      <div class="card" data-measure-role="card">
+        <div class="section-title"><span class="num">11</span> Variability sets the rate</div>
+        <div class="figure">
+          <img src="assets/paper_figures/fig_sim_archetypes.png" data-source="paper" data-asset-id="fig_sim_archetypes" style="width: 86%" alt="Simulation: PR-AUC against n by behavioural archetype">
+          <div class="caption fs-2">
+            <strong>Simulation.</strong> Regular people saturate by n = 50; travellers and variable people need about 500.
+          </div>
+        </div>
+        <ul>
+          <li>Under controlled manipulation: &rho; = 0.48&ndash;0.71, all Holm p &lt; 0.001</li>
+          <li>In real Berka accounts no descriptor predicts it (|&rho;| &le; 0.12)</li>
+        </ul>
+      </div>
+
+    </div>
+
+  </div>
+
+  <!-- ============================ TAKEAWAYS ============================ -->
+  <section class="takeaways-strip" data-measure-role="footer-strip">
+    <div class="ts-title"><span class="num">12</span> Takeaways</div>
+    <div class="ts-item"><span class="ts-key">Idea.</span><span class="ts-text">A personal baseline ranks well from about 25 transactions.</span></div>
+    <div class="ts-item"><span class="ts-key">Method.</span><span class="ts-text">Provenance labels, paired windows, three data layers.</span></div>
+    <div class="ts-item"><span class="ts-key">Result.</span><span class="ts-text">A hybrid removes the cold-start penalty; calibration moves the operating point.</span></div>
+    <div class="ts-item"><span class="ts-key">Practical.</span><span class="ts-text">Shrink toward the crowd, keep recent history, calibrate out-of-sample.</span></div>
+  </section>
+
+  <!-- ============================ FOOTER ============================ -->
+  <div class="footer" data-measure-role="footer">
+    <div>
+      <strong class="method-name">How Much Personal History Is Enough?</strong> &middot;
+      B. G. Dyju &middot; Independent Researcher, Dubai, United Arab Emirates
+    </div>
+    <div>
+      Contact: <span class="repo">briyandyju@gmail.com</span>
+    </div>
+  </div>
+
+</div>
+
+</body>
+</html>

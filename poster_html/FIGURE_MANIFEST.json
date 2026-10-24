@@ -1,0 +1,85 @@
+{
+  "schema_version": 1,
+  "source_pdf": {
+    "path": "C:\\Users\\Brii\\Documents\\Research Paper\\research\\paper\\main.pdf",
+    "sha256": "3e77decc67fd04895dca7440f8fe117a39487e00104a177f64def2a2d84d6607"
+  },
+  "figures": [
+    {
+      "asset_id": "fig_berka_curves",
+      "file": "assets/paper_figures/fig_berka_curves.png",
+      "from_paper": true,
+      "page": 4,
+      "bbox": [
+        308.0,
+        52.0,
+        567.0,
+        238.0
+      ],
+      "dpi": 450,
+      "sha256": "7ed1da33e132a3616e8a9bd06022fcbd39762d7762fa15f27cd9ab23da019cd0",
+      "natural_px": [
+        1558,
+        1106
+      ],
+      "caption_hint": "Fig. 1 data efficiency on real bank histories (Berka)"
+    },
+    {
+      "asset_id": "fig_arms",
+      "file": "assets/paper_figures/fig_arms.png",
+      "from_paper": true,
+      "page": 5,
+      "bbox": [
+        308.0,
+        52.0,
+        567.0,
+        213.0
+      ],
+      "dpi": 450,
+      "sha256": "adc33ba4eea9ecad7a57fd92be8eafc04095e15314fe0e908648a23c3924fd80",
+      "natural_px": [
+        1558,
+        947
+      ],
+      "caption_hint": "Fig. 2 personal, global and shrinkage-hybrid Mahalanobis"
+    },
+    {
+      "asset_id": "fig_sim_archetypes",
+      "file": "assets/paper_figures/fig_sim_archetypes.png",
+      "from_paper": true,
+      "page": 8,
+      "bbox": [
+        45.0,
+        52.0,
+        304.0,
+        238.0
+      ],
+      "dpi": 450,
+      "sha256": "586ba990a6b131ed72ccec82d1d32512b92836006b0263306f0eb009da25d424",
+      "natural_px": [
+        1558,
+        1106
+      ],
+      "caption_hint": "Fig. 3 simulation archetypes"
+    },
+    {
+      "asset_id": "fig_tabformer_curves",
+      "file": "assets/paper_figures/fig_tabformer_curves.png",
+      "from_paper": true,
+      "page": 8,
+      "bbox": [
+        308.0,
+        52.0,
+        567.0,
+        238.0
+      ],
+      "dpi": 450,
+      "sha256": "b831274227bbe5ddfbf405875c46f99ef798b8f58da622094ae45afedafa8af4",
+      "natural_px": [
+        1558,
+        1103
+      ],
+      "caption_hint": "Fig. 4 TabFormer (synthetic)"
+    }
+  ]
+}

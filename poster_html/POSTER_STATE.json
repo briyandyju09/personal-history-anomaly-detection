@@ -1,0 +1,42 @@
+{
+  "phase": "7-done",
+  "venue": null,
+  "canvas": {
+    "w": "1189mm",
+    "h": "841mm",
+    "orientation": "landscape",
+    "source_url": null,
+    "note": "user-chosen A0 landscape; paper has no poster venue",
+    "retrieved": "2026-10-24"
+  },
+  "template": "landscape_4col",
+  "token_pack": "generic",
+  "design_decisions": {
+    "logos": "none, text affiliation only",
+    "qr": "QR to https://briyan.xyz/research (URL supplied 2026-10-24; HTTP 200 checked), 58u, generated offline",
+    "venue_badge": "removed (no venue)",
+    "reviewer": "REVIEW_UNAVAILABLE (no .aris/reviewer.json, no Codex MCP); claim audit is a self-audit"
+  },
+  "figures_selected": [
+    "fig_berka_curves",
+    "fig_arms",
+    "fig_sim_archetypes",
+    "fig_tabformer_curves"
+  ],
+  "visual_rounds": 2,
+  "codex_threads": {
+    "audit": null,
+    "final": null
+  },
+  "status": "done",
+  "timestamp": "2026-10-24",
+  "gate_summary": {
+    "preflight": "PASS",
+    "style": "PASS",
+    "asset": "PASS",
+    "measure": "PASS (spread 2.2 px, footer gap 35.9-38.1 px)",
+    "polish": "PASS",
+    "verify_final": "PASS"
+  },
+  "visual_score": "about 9/10, uncalibrated (no human reference posters)"
+}

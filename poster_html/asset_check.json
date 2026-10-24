@@ -1,0 +1,90 @@
+{
+  "gate": "asset",
+  "status": "WARN",
+  "checks": [
+    {
+      "id": "paper_fig_count",
+      "severity": "hard",
+      "status": "PASS",
+      "detail": "4 img[data-source=paper] (>= 2 required)"
+    },
+    {
+      "id": "asset_provenance",
+      "severity": "hard",
+      "status": "PASS",
+      "detail": "asset fig_berka_curves: resolves, from_paper, fields complete, file exists, sha256 matches."
+    },
+    {
+      "id": "asset_provenance",
+      "severity": "hard",
+      "status": "PASS",
+      "detail": "asset fig_arms: resolves, from_paper, fields complete, file exists, sha256 matches."
+    },
+    {
+      "id": "asset_provenance",
+      "severity": "hard",
+      "status": "PASS",
+      "detail": "asset fig_tabformer_curves: resolves, from_paper, fields complete, file exists, sha256 matches."
+    },
+    {
+      "id": "asset_provenance",
+      "severity": "hard",
+      "status": "PASS",
+      "detail": "asset fig_sim_archetypes: resolves, from_paper, fields complete, file exists, sha256 matches."
+    },
+    {
+      "id": "fig_area",
+      "severity": "hard",
+      "status": "PASS",
+      "detail": "asset fig_berka_curves: 4.55% of poster (>= 1.50%)."
+    },
+    {
+      "id": "fig_resolution",
+      "severity": "warn",
+      "status": "WARN",
+      "detail": "asset fig_berka_curves: natural 1558x1106 = 1.63x rendered (956x680); >= 1.5x floor but below 2.0x target -- consider a higher-DPI crop."
+    },
+    {
+      "id": "fig_area",
+      "severity": "hard",
+      "status": "PASS",
+      "detail": "asset fig_arms: 4.29% of poster (>= 1.50%)."
+    },
+    {
+      "id": "fig_resolution",
+      "severity": "warn",
+      "status": "WARN",
+      "detail": "asset fig_arms: natural 1558x947 = 1.55x rendered (1002x611); >= 1.5x floor but below 2.0x target -- consider a higher-DPI crop."
+    },
+    {
+      "id": "fig_area",
+      "severity": "hard",
+      "status": "PASS",
+      "detail": "asset fig_tabformer_curves: 3.57% of poster (>= 1.50%)."
+    },
+    {
+      "id": "fig_resolution",
+      "severity": "warn",
+      "status": "WARN",
+      "detail": "asset fig_tabformer_curves: natural 1558x1103 = 1.83x rendered (847x601); >= 1.5x floor but below 2.0x target -- consider a higher-DPI crop."
+    },
+    {
+      "id": "fig_area",
+      "severity": "hard",
+      "status": "PASS",
+      "detail": "asset fig_sim_archetypes: 3.46% of poster (>= 1.50%)."
+    },
+    {
+      "id": "fig_resolution",
+      "severity": "warn",
+      "status": "WARN",
+      "detail": "asset fig_sim_archetypes: natural 1558x1106 = 1.86x rendered (833x593); >= 1.5x floor but below 2.0x target -- consider a higher-DPI crop."
+    },
+    {
+      "id": "total_fig_area",
+      "severity": "hard",
+      "status": "PASS",
+      "detail": "total paper-image area = 23.09% of body (>= 12.00%)."
+    }
+  ]
+}

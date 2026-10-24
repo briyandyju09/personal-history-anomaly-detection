@@ -1,0 +1,268 @@
+{
+  "schema_version": 1,
+  "skill": "paper-poster-html",
+  "timestamp": "2026-10-24T08:01:56Z",
+  "poster_html": "C:\\Users\\Brii\\Documents\\Research Paper\\research\\poster_html\\poster.html",
+  "canvas": {
+    "source": "page-rule",
+    "width_cm": 118.9,
+    "height_cm": 84.1,
+    "orientation": "landscape",
+    "source_url": null
+  },
+  "overall": "PASS",
+  "hard_failures": 0,
+  "warnings": 0,
+  "gates": [
+    {
+      "name": "preflight",
+      "severity": "hard",
+      "status": "PASS",
+      "command": [
+        "C:\\Users\\Brii\\AppData\\Local\\Python\\pythoncore-3.14-64\\python.exe",
+        "C:\\Users\\Brii\\Auto-claude-code-research-in-sleep\\skills\\paper-poster-html\\scripts\\poster_check.py",
+        "preflight",
+        "C:\\Users\\Brii\\Documents\\Research Paper\\research\\poster_html\\poster.html"
+      ],
+      "summary": {
+        "exit_code": 0,
+        "tail": "[preflight] C:\\Users\\Brii\\Documents\\Research Paper\\research\\poster_html\\poster.html\n  problems: 0   warnings: 0\n[preflight] PASS"
+      },
+      "artifacts": []
+    },
+    {
+      "name": "style",
+      "severity": "hard",
+      "status": "PASS",
+      "command": [
+        "C:\\Users\\Brii\\AppData\\Local\\Python\\pythoncore-3.14-64\\python.exe",
+        "C:\\Users\\Brii\\Auto-claude-code-research-in-sleep\\skills\\paper-poster-html\\scripts\\style_check.py",
+        "C:\\Users\\Brii\\Documents\\Research Paper\\research\\poster_html\\poster.html",
+        "--tokens",
+        "C:\\Users\\Brii\\Auto-claude-code-research-in-sleep\\skills\\paper-poster-html\\templates\\tokens\\generic.json",
+        "--json",
+        "C:\\Users\\Brii\\Documents\\Research Paper\\research\\poster_html\\style_check.json"
+      ],
+      "summary": {
+        "gate": "style",
+        "status": "PASS",
+        "rules": [
+          {
+            "id": 1,
+            "severity": "hard",
+            "status": "PASS",
+            "detail": "ok"
+          },
+          {
+            "id": 2,
+            "severity": "hard",
+            "status": "PASS",
+            "detail": "ok"
+          },
+          {
+            "id": 3,
+            "severity": "hard",
+            "status": "PASS",
+            "detail": "ok"
+          },
+          {
+            "id": 4,
+            "severity": "hard",
+            "status": "PASS",
+            "detail": "2 hue cluster(s), all within 22 deg of the palette"
+          },
+          {
+            "id": 5,
+            "severity": "hard",
+            "status": "PASS",
+            "detail": "ok"
+          },
+          {
+            "id": 6,
+            "severity": "hard",
+            "status": "PASS",
+            "detail": "ok"
+          },
+          {
+            "id": 7,
+            "severity": "hard",
+            "status": "PASS",
+            "detail": "ok"
+          },
+          {
+            "id": 8,
+            "severity": "hard",
+            "status": "PASS",
+            "detail": "ok"
+          },
+          {
+            "id": 9,
+            "severity": "warn",
+            "status": "PASS",
+            "detail": "9 --fs-* token(s) defined"
+          },
+          {
+            "id": 10,
+            "severity": "hard",
+            "status": "PASS",
+            "detail": "ok"
+          },
+          {
+            "id": 11,
+            "severity": "hard",
+            "status": "PASS",
+            "detail": "ok"
+          },
+          {
+            "id": 12,
+            "severity": "warn",
+            "status": "PASS",
+            "detail": "dark area = 0.0% of poster (<= 8%)"
+          }
+        ]
+      },
+      "artifacts": [
+        "C:\\Users\\Brii\\Documents\\Research Paper\\research\\poster_html\\style_check.json"
+      ]
+    },
+    {
+      "name": "asset",
+      "severity": "hard",
+      "status": "PASS",
+      "command": [
+        "C:\\Users\\Brii\\AppData\\Local\\Python\\pythoncore-3.14-64\\python.exe",
+        "C:\\Users\\Brii\\Auto-claude-code-research-in-sleep\\skills\\paper-poster-html\\scripts\\asset_check.py",
+        "C:\\Users\\Brii\\Documents\\Research Paper\\research\\poster_html\\poster.html",
+        "--manifest",
+        "C:\\Users\\Brii\\Documents\\Research Paper\\research\\poster_html\\FIGURE_MANIFEST.json",
+        "--json",
+        "C:\\Users\\Brii\\Documents\\Research Paper\\research\\poster_html\\asset_check.json"
+      ],
+      "summary": {
+        "gate": "asset",
+        "status": "WARN",
+        "checks": [
+          {
+            "id": "paper_fig_count",
+            "severity": "hard",
+            "status": "PASS",
+            "detail": "4 img[data-source=paper] (>= 2 required)"
+          },
+          {
+            "id": "asset_provenance",
+            "severity": "hard",
+            "status": "PASS",
+            "detail": "asset fig_berka_curves: resolves, from_paper, fields complete, file exists, sha256 matches."
+          },
+          {
+            "id": "asset_provenance",
+            "severity": "hard",
+            "status": "PASS",
+            "detail": "asset fig_arms: resolves, from_paper, fields complete, file exists, sha256 matches."
+          },
+          {
+            "id": "asset_provenance",
+            "severity": "hard",
+            "status": "PASS",
+            "detail": "asset fig_tabformer_curves: resolves, from_paper, fields complete, file exists, sha256 matches."
+          },
+          {
+            "id": "asset_provenance",
+            "severity": "hard",
+            "status": "PASS",
+            "detail": "asset fig_sim_archetypes: resolves, from_paper, fields complete, file exists, sha256 matches."
+          },
+          {
+            "id": "fig_area",
+            "severity": "hard",
+            "status": "PASS",
+            "detail": "asset fig_berka_curves: 4.55% of poster (>= 1.50%)."
+          },
+          {
+            "id": "fig_resolution",
+            "severity": "warn",
+            "status": "WARN",
+            "detail": "asset fig_berka_curves: natural 1558x1106 = 1.63x rendered (956x680); >= 1.5x floor but below 2.0x target -- consider a higher-DPI crop."
+          },
+          {
+            "id": "fig_area",
+            "severity": "hard",
+            "status": "PASS",
+            "detail": "asset fig_arms: 4.29% of poster (>= 1.50%)."
+          },
+          {
+            "id": "fig_resolution",
+            "severity": "warn",
+            "status": "WARN",
+            "detail": "asset fig_arms: natural 1558x947 = 1.55x rendered (1002x611); >= 1.5x floor but below 2.0x target -- consider a higher-DPI crop."
+          },
+          {
+            "id": "fig_area",
+            "severity": "hard",
+            "status": "PASS",
+            "detail": "asset fig_tabformer_curves: 3.57% of poster (>= 1.50%)."
+          },
+          {
+            "id": "fig_resolution",
+            "severity": "warn",
+            "status": "WARN",
+            "detail": "asset fig_tabformer_curves: natural 1558x1103 = 1.83x rendered (847x601); >= 1.5x floor but below 2.0x target -- consider a higher-DPI crop."
+          },
+          {
+            "id": "fig_area",
+            "severity": "hard",
+            "status": "PASS",
+            "detail": "asset fig_sim_archetypes: 3.46% of poster (>= 1.50%)."
+          },
+          {
+            "id": "fig_resolution",
+            "severity": "warn",
+            "status": "WARN",
+            "detail": "asset fig_sim_archetypes: natural 1558x1106 = 1.86x rendered (833x593); >= 1.5x floor but below 2.0x target -- consider a higher-DPI crop."
+          },
+          {
+            "id": "total_fig_area",
+            "severity": "hard",
+            "status": "PASS",
+            "detail": "total paper-image area = 23.09% of body (>= 12.00%)."
+          }
+        ]
+      },
+      "artifacts": [
+        "C:\\Users\\Brii\\Documents\\Research Paper\\research\\poster_html\\asset_check.json"
+      ]
+    },
+    {
+      "name": "measure",
+      "severity": "hard",
+      "status": "PASS",
+      "command": [
+        "C:\\Users\\Brii\\AppData\\Local\\Python\\pythoncore-3.14-64\\python.exe",
+        "C:\\Users\\Brii\\Auto-claude-code-research-in-sleep\\skills\\paper-poster-html\\scripts\\poster_check.py",
+        "measure",
+        "C:\\Users\\Brii\\Documents\\Research Paper\\research\\poster_html\\poster.html"
+      ],
+      "summary": {
+        "exit_code": 0,
+        "tail": "  col0    last-card-bottom =  2837.05 px\n  col1    last-card-bottom =  2838.91 px\n  col2    last-card-bottom =  2837.56 px\n  col3    last-card-bottom =  2839.25 px\n  spread = 2.20 px   (target < 5.0 px)\n  intercard gap in [22.67 (col0), 22.67 (col0)] px   (target [12.0, 50.0])\n  gap -> footer-strip in [35.86, 38.06] px   (target [30.0, 50.0])\n[measure] PASS"
+      },
+      "artifacts": []
+    },
+    {
+      "name": "polish",
+      "severity": "soft",
+      "status": "PASS",
+      "command": [
+        "C:\\Users\\Brii\\AppData\\Local\\Python\\pythoncore-3.14-64\\python.exe",
+        "C:\\Users\\Brii\\Auto-claude-code-research-in-sleep\\skills\\paper-poster-html\\scripts\\poster_check.py",
+        "polish",
+        "C:\\Users\\Brii\\Documents\\Research Paper\\research\\poster_html\\poster.html"
+      ],
+      "summary": {
+        "exit_code": 0,
+        "tail": "[polish] poster.html\n  figures checked     : 4\n  stat-like elements  : 22\n  space-between cols  : 0\n  cards checked       : 11\n  flex/<br> parents   : 0\n  warnings            : 0\n[polish] PASS"
+      },
+      "artifacts": []
+    }
+  ]
+}
