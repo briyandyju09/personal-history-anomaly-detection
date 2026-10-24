@@ -1,0 +1,16 @@
+\section{Related Work}\label{sec:related}
+
+\paragraph{Behavioural profiling for card fraud}
+Per-user profiling for card fraud is mature. Dal~Pozzolo \emph{et al.}\ formalise realistic evaluation, including feature augmentation from cardholder profiles and the interaction between alerts and investigator feedback \cite{dalpozzolo2018realistic}, and report lessons learned from a practitioner perspective \cite{dalpozzolo2014learned}. Correa~Bahnsen \emph{et al.}\ aggregate raw transactions into spending-behaviour features per cardholder \cite{bahnsen2016feature}. Jurgovsky \emph{et al.}\ treat detection as sequence classification over a card's transaction stream \cite{jurgovsky2018sequence}, and Lucas and Jurgovsky survey the field's recurring problems of class imbalance, dataset shift and evolving behaviour \cite{lucas2020survey}. These works build and evaluate personal models; none asks how much personal history the model needs.
+
+\paragraph{Personal baselines in deployed systems}
+Granted patents describe personal-baseline methods directly. One family builds per-user profiles from the median, the median absolute deviation and a ``median of abnormality'' statistic, and scores new activity by its relative deviation \cite{saunders2021profile,saunders2023profile}. Another constructs separate per-user models and explicitly filters out users with insufficient history \cite{faigon2021anomaly}. Both treat the sufficiency cutoff as a given; we measure it.
+
+\paragraph{Cold start}
+Graph-based methods such as SparseFraudNet address users with thin histories through relational aggregation over other accounts \cite{zhang2025sparsefraudnet}. This routes around the per-user data requirement rather than quantifying it.
+
+\paragraph{Learning curves}
+Viering and Loog review the shapes of learning curves and establish that no universal functional form exists: curves are commonly power-law or exponential but can be ill-behaved, and both rate and saturation level are task-dependent \cite{viering2023shape}. Mohr and van Rijn survey their use in decision making \cite{mohr2022learning}. Per-user cold-start sweeps appear in recommender systems, where SPMC caps per-user interaction counts and reports performance across the cap \cite{cai2017spmc}. We apply this toolkit to the question the fraud literature leaves open.
+
+\paragraph{Gap}
+The field knows how to build personal behavioural models, knows that thin histories are a problem, and has general tooling for performance against training-set size. We found no study that reports, for unsupervised behavioural anomaly detection on financial transactions, performance as a function of the number of transactions in the individual's own history, with an operational sufficiency criterion and a matched comparison against population and hybrid models at each size. The search used open web sources; paywalled venues were reachable only through abstracts and citing-paper summaries, so the gap stands as the result of a documented search, not a proof of absence.

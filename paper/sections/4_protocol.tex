@@ -1,0 +1,53 @@
+\section{Experimental Protocol}\label{sec:protocol}
+
+\subsection{Split Design}
+For each entity, the \emph{evaluation window} is its last 60 transactions (100 in the simulation), and the training history of size $n$ is the $n$ transactions immediately preceding that window:
+\begin{equation*}
+[\;\text{earlier history}\;\mid\;\underbrace{n\ \text{training}}_{\text{varies}}\;\mid\;\underbrace{60\ \text{evaluation}}_{\text{fixed}}\;].
+\end{equation*}
+No transaction is ever both trained on and tested on, at any $n$. Because the window is identical across $n$ for a given entity, comparisons across history sizes are paired at the entity level, and differences in window difficulty between entities cancel in paired tests. The population (global) model is fitted on the \emph{earliest} transactions of donor entities that are disjoint from the evaluated entities, so it never sees an evaluated entity's data and is not advantaged by seeing later data.
+
+On Berka we evaluate $n\in\{1,5,10,25,50,100,250\}$ on one fixed cohort of accounts with at least 310 transactions (1{,}319 eligible; 300 evaluated and 400 donors). Extending to $n=500$ needs 560 transactions per account, which about 60 of the most active accounts have; the $n=500$ point would be computed on a biased cohort a fifth the size of every other point and would break the pairing. The simulation and TabFormer, where depth is not a constraint, extend to $n=500$ (TabFormer: 300 evaluated and 400 donor entities; eligibility requires at least 560 transactions).
+
+\subsection{Ground Truth}
+Labelling anomalies with a statistical rule and then evaluating detectors that compute something similar measures agreement between two versions of one rule. We avoid this circularity.
+
+\paragraph{Protocol I (primary): impostor substitution}
+A held-out transaction of the target entity is replaced by a real transaction from a different real entity. The replacement keeps the target's timeline slot and takes the impostor's amount, type, operation and \texttt{k\_symbol}. Ground truth is provenance: a different person's real behaviour produced the row, and no statistical criterion is involved. Substitution replaces insertion because insertion would perturb the surrounding inter-arrival gaps and let detectors exploit that artefact instead of behaviour. As a consequence, timing carries no discriminative signal under Protocol I, since the injected row inherits the target's true date.
+
+\paragraph{Protocol P (secondary): parametric perturbation}
+A held-out transaction is replaced by a copy of itself with its amount multiplied by 5.
+
+Injection rate is 10\% in both protocols, giving six anomalies per 60-transaction window. Injection is performed once per entity and shared across all history sizes, which preserves the pairing.
+
+\subsection{Features}
+Berka features have 21 dimensions and depend only on the transaction and strictly earlier transactions of the same account: log amount; a credit indicator; day-of-month and day-of-week as sine and cosine pairs; log inter-arrival gap; one-hot operation (5 plus missing); and one-hot \texttt{k\_symbol} (7 plus missing). The account balance is excluded: it is accumulated state, not a behavioural choice, and under Protocol I a substituted row would carry a balance discontinuity that reveals provenance without reflecting behaviour. TabFormer features have 26 dimensions (13 numeric or binary plus a 13-level merchant-category-code one-hot). Standardisation is fitted on training history only. At $n=1$ dispersion is undefined and scales collapse to unity; we record this as a degenerate regime.
+
+\subsection{Detectors}
+\begin{itemize}
+\item \textbf{Gaussian z} and \textbf{robust z}: $|z|$ of log amount using mean and standard deviation, or median and median absolute deviation.
+\item \textbf{Mahalanobis}: Mahalanobis distance from the training mean under a shrinkage-regularised, ridge-stabilised covariance estimate.
+\item \textbf{$k$-NN}: distance to the fifth nearest training point. With $n$ from 1 to 25 in a 21-dimensional, one-hot-heavy space, cluster counts and density parameters for $K$-means or DBSCAN cannot be estimated without tuning on data we do not have. Distance to the $k$th neighbour belongs to the same family of density-based methods as LOF \cite{breunig2000lof}, needs no cluster count and degrades gracefully.
+\item \textbf{Isolation Forest} \cite{liu2008isolation}: 200 trees, seeded, with subsample size $\min(256,n)$ (scikit-learn \cite{pedregosa2011scikit}).
+\item \textbf{Autoencoder}: a $d$-4-$d$ network with tanh units ($d=21$ on Berka, $d=26$ on TabFormer), full-batch Adam (learning rate 0.01, weight decay $10^{-4}$, 300 epochs), implemented in NumPy.
+\end{itemize}
+
+\paragraph{Shrinkage hybrid}
+The hybrid shrinks personal location and scatter toward population estimates with a weight determined solely by $n$:
+\begin{align}
+\vmu_{h} &= \frac{n\,\vmu_{p}+\kap\,\vmu_{g}}{n+\kap}, &
+\mSigma_{h} &= \frac{n\,\mSigma_{p}+\kap\,\mSigma_{g}}{n+\kap}+\epsilon\mI,
+\end{align}
+where subscripts $p$ and $g$ denote personal and global estimates, $\epsilon\mI$ is a small ridge term, and $\kap=25$ is fixed in advance, not tuned on test data. At $n=0$ the hybrid is exactly the global model; as $n$ grows it converges to the personal model.
+
+\subsection{Evaluation}
+At 10\% prevalence a detector that flags nothing scores 90\% accuracy while detecting nothing, and accuracy changes with prevalence without any change in the detector. We therefore report precision-recall AUC (PR-AUC) as the primary metric, since both precision and recall condition on the minority class \cite{saito2015precision}, and the prevalence baseline is 0.10.
+
+\paragraph{Operating point and calibration rules}
+Operating-point metrics (flag rate, false-positive rate (FPR), recall, precision) need an alert threshold, and choosing one on test labels would leak. We set the threshold at the 95th percentile of training scores, so the nominal FPR is 0.05, and compare two ways of obtaining those scores. The \emph{in-sample} rule scores each training point with the model fitted on all $n$ training points. The \emph{leave-one-out (LOO)} rule scores each training point with a model fitted on the other $n-1$ points (exact refits, no approximation); it is undefined at $n=1$, where the rule flags nothing. Both rules are computable by a deployed system.
+
+\paragraph{Sufficiency thresholds}
+We apply three operational definitions to the same mean curves over the evaluated grid. The \emph{relative-$q$ threshold} is the smallest evaluated $n$ whose mean PR-AUC reaches $q\%$ of the curve's best observed value and is never later undercut; we use $q=90$ and report $q=95$. The \emph{stability threshold} is the smallest $n$ from which the across-account standard deviation of PR-AUC stays at or below the median of that model's own standard deviations over all sizes. An \emph{absolute} threshold needs a policy level that should follow from the cost of a false positive in a deployment we do not model, so we do not set one. Saturation is also fitted as $y(n)=y_{\max}-(y_{\max}-y_0)e^{-n/\tau}$, with $R^2$ reported so that poor fits are visible.
+
+\paragraph{Statistics}
+The independent unit is the entity, so we resample entities, never transactions. Arm comparisons use a paired bootstrap (2{,}000 resamples) and the Wilcoxon signed-rank test, with the rank-biserial correlation as effect size alongside every $p$ value; correlations use Spearman's $\rho$. We apply Holm correction within each family of tests. To check that headline results do not depend on one cohort draw, the real-data curves and the simulation's Mahalanobis and $k$-NN curves are repeated at five independent cohort-selection seeds (a fresh 300-account and 400-donor draw per seed; fresh per-user profile draws in the simulation); the master seed is 20260920. Per-entity seeds are derived deterministically, so any single entity can be re-run in isolation. Parameters and reproduction commands are in Appendix~\ref{app:repro}.

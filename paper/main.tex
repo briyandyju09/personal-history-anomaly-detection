@@ -1,0 +1,64 @@
+% IEEE journal format (IEEEtran). References count toward the page total.
+\documentclass[journal]{IEEEtran}
+
+% Math
+\usepackage{amsmath,amssymb,mathtools}
+
+% Typography
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{url}
+\usepackage{booktabs}
+\usepackage{microtype}
+\usepackage{xcolor}
+\usepackage{graphicx}
+\usepackage{cite}
+
+% hyperref before cleveref
+\usepackage[hidelinks]{hyperref}
+\usepackage[capitalize,noabbrev]{cleveref}
+\crefname{figure}{Fig.}{Figs.}
+\Crefname{figure}{Fig.}{Figs.}
+\crefname{table}{Table}{Tables}
+\Crefname{table}{Table}{Tables}
+\crefname{section}{Section}{Sections}
+\Crefname{section}{Section}{Sections}
+\crefname{subsection}{Section}{Sections}
+\Crefname{subsection}{Section}{Sections}
+\crefname{appendix}{Appendix}{Appendices}
+\Crefname{appendix}{Appendix}{Appendices}
+
+\input{math_commands}
+
+\title{How Much Personal History Is Enough? Measuring the Data Requirement for Individualised Financial Behavioural Anomaly Detection}
+
+\author{Briyan~George~Dyju%
+\thanks{B.~G.~Dyju is an independent researcher in Dubai, United Arab Emirates (e-mail: briyandyju@gmail.com).}}
+
+\begin{document}
+
+\maketitle
+
+\begin{abstract}
+\input{sections/0_abstract}
+\end{abstract}
+
+\begin{IEEEkeywords}
+anomaly detection, personalisation, cold start, learning curves, transaction data, threshold calibration
+\end{IEEEkeywords}
+
+\input{sections/1_introduction}
+\input{sections/2_related_work}
+\input{sections/3_setting_data}
+\input{sections/4_protocol}
+\input{sections/5_results}
+\input{sections/6_discussion}
+\input{sections/7_conclusion}
+
+\appendices
+\input{sections/A_appendix}
+
+\bibliographystyle{IEEEtran}
+\bibliography{references}
+
+\end{document}

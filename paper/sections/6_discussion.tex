@@ -1,0 +1,44 @@
+\section{Discussion}\label{sec:discussion}
+
+\paragraph{What the evidence establishes}
+On real transaction histories, personalised behavioural anomaly detection improves steeply between 5 and 25 personal transactions and is essentially saturated by 50. The relative-90 threshold of 25 is identical across five cohort draws and across two anomaly definitions, so it reflects the estimation problem rather than one cohort or one protocol. Ranking quality and operating behaviour reach adequacy at about the same history size once the alert threshold is calibrated out-of-sample (LOO FPR 0.066 at $n=25$ against a nominal 0.05); what separates them is a narrower point, that at $n=10$ a PR-AUC of 0.441 yields no usable operating point under either calibration rule (in-sample flags 96\%, LOO flags 1.2\%). Personalisation is worse than a population model below a detector- and dataset-dependent crossover, and a history-weighted shrinkage hybrid removes that penalty when the personal signal lives in the parameters of a shared representation. Detector rankings under scarcity are dataset-dependent. Variability governs the \emph{rate} of learning under controlled manipulation, though not detectably in real Berka accounts. Recent history suffices, and a district-level audit finds no Holm-significant concentration of false positives.
+
+\paragraph{What remains interpretation}
+That the real-data null on variability reflects thin descriptors rather than a genuinely absent effect is an interpretation. The TabFormer result (a Holm-significant state-entropy effect on a dataset with a geographic channel) makes it more credible than the alternative that retail banking has no such effect, without resolving it, since TabFormer is synthetic. The mechanism behind the negative $100\to250$ marginal gain and the cost of reaching further back is open: drift is real and lag-dependent but does not predict which accounts lose.
+
+\paragraph{Practical implication}
+For the best real-data detector, the answer to ``how much history is enough'' is about 25 transactions for ranking quality, about 25 before the FPR is near nominal under LOO calibration, and no number that guarantees any individual is well served. The third clause matters most. The across-account spread of PR-AUC never stabilised at any size we evaluated, so a system that meets a target on average still fails badly for a substantial minority of users; a population average is the wrong unit for a decision applied per person. A system should therefore use a hybrid that degrades to population behaviour when personal history is thin, hold recent history rather than all history, treat a detector that ranks well as not yet a detector that can be deployed, and verify on its own data any claim about which detector is best under scarcity.
+
+\section{Limitations}\label{sec:limits}
+
+\paragraph{Data}
+The real evidence is one dataset from one bank in one country, 1993 to 1998 retail banking, with day-resolution timestamps and no merchant, category or geographic fields. The three simulated anomaly classes with the steepest data requirements (merchant, category, geographic) therefore could not be tested on real behaviour. TabFormer adds those channels, but it is synthetic, so generalisation to modern real card payments is untested; the reversal of Isolation Forest's ranking between the two datasets shows that this limit matters in practice. Real history sizes stop at 250 because of dataset depth, and several TabFormer curves are still rising at 250, which hints at, but is not evidence for, what a deeper real dataset would show. The evaluated cohort (at least 310 transactions) is the more active half of the accounts and is not representative of the sparse-history users this study is most about.
+
+\paragraph{Protocol}
+Neither injection protocol produces fraud, and neither models an adversary who imitates the account holder; such an adversary would choose transactions near the victim's behavioural centre, the hardest case and the one we cannot evaluate. Protocol~I makes timing non-discriminative by construction. The 10\% injection rate is far above realistic fraud prevalence, so absolute PR-AUC values do not transfer to a realistic base rate; the shape of the curves is the transferable quantity. Transaction count and temporal coverage cannot be separated at fixed count.
+
+\paragraph{Modelling and calibration}
+The hybrid strength $\kappa=25$ was fixed in advance; tuning it would likely improve the hybrid but would invalidate the comparison on our data. The autoencoder is deliberately small. Thresholds are read from mean curves on a coarse grid, the per-account threshold distribution is heavy-tailed with 39\% undefined, and the fitted $\tau$ values are not cross-validated against alternative model forms such as a power law. LOO calibration is one of several out-of-sample rules; split-half and population-derived thresholds were not tried, and for Isolation Forest at $n\le10$ the scale mismatch of its LOO forest is an untested confound. LOO operating-point results cover Berka under Protocol~I; the other operating-point figures (\cref{sec:calibration}) use the in-sample rule.
+
+\paragraph{Statistics}
+Cohort selection was repeated at five seeds for the Berka Protocol~I curves and the simulation's Mahalanobis and $k$-NN curves. Protocol~P, the simulation's Isolation Forest and autoencoder, the stride experiment, TabFormer, the drift measurement and the audit each rest on one realised sample. TabFormer was verified from a single download source. With 300 paired entities, Wilcoxon $p$ values are extremely small even for effects of no practical size, which is why effect sizes accompany them; the hybrid's $-0.033$ difference at $n=10$ is one such case.
+
+\section{Ethical Considerations}\label{sec:ethics}
+
+\paragraph{Deviation is not suspicion}
+The transactions our detectors flag are, by construction, transactions that differ from a person's past. In life those are holidays, house moves, medical costs, a new job, a death in the family, leaving an abusive relationship. A system that escalates deviation to suspicion penalises people for changing.
+
+\paragraph{False positives are not symmetric with false negatives}
+A missed anomaly costs an institution money; a false positive can mean a declined card abroad, a frozen account during an emergency, or an account holder treated as a suspect. Our best real-data detector at $n=50$ has an FPR of 7.3\% under LOO calibration (18.9\% under in-sample calibration) against a nominal 5\%, and at realistic transaction volumes even 7\% means very many wrongly flagged legitimate transactions.
+
+\paragraph{Sparse-history users}
+The people with the least history are new customers, young people, recent immigrants and people re-entering the formal banking system. For them a personal model either floods them with alerts (in-sample calibration) or says nothing (LOO calibration at $n=10$), and below the crossover a population or hybrid model outperforms it. Deploying personalisation without a history floor serves exactly these users worst.
+
+\paragraph{Discrimination}
+Behavioural features are proxies for life circumstances: irregular income, cash reliance and geographic mobility correlate with class, occupation, immigration status and disability, and a detector calibrated on regular salaried behaviour treats irregular lives as anomalous by default. Our district-level audit (\cref{sec:audit}) finds no Holm-significant relationship between FPR and average salary, unemployment, urbanisation or region, but with 300 accounts it cannot exclude weak effects, and Berka carries no per-person demographic field, so age, tenure, immigration status and disability are untested. The audit narrows the concern; it does not clear it, and no system of this kind should be deployed without an individual-level audit on the axes we could not test.
+
+\paragraph{Privacy, explainability and data handling}
+Personal transaction histories are among the most revealing data about a person, and per-user modelling requires retaining and processing them continuously. That recent history suffices and older history is mildly harmful (\cref{sec:recency}) is a rare case where a privacy interest and a performance interest align: shorter retention appears to cost nothing here. A Mahalanobis distance is a scalar with no account of which behaviour was unusual; any deployment that affects a person's access to their money should state the reason and support contest and correction. The Berka data were anonymised by their publisher; we redistribute no raw records, work only at account-identifier level and make no attempt at re-identification.
+
+\paragraph{Appropriate use}
+The thresholds reported here describe when a personal baseline ranks well on these data. They are not a licence to deploy a detector at $N$ transactions, and a flagged transaction is not grounds for adverse action against a customer.
