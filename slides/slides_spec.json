@@ -1,0 +1,305 @@
+{
+  "title": "How Much Personal History Is Enough?",
+  "author": "Briyan George Dyju",
+  "institute": "Independent Researcher, Dubai, United Arab Emirates",
+  "slides": [
+    {
+      "type": "title",
+      "title": "How Much Personal History Is Enough?",
+      "time": 15,
+      "say": "Thank you for having me. I'm Briyan Dyju, an independent researcher in Dubai, and I want to ask a simple question: how much of a person's own history does an anomaly detector need?",
+      "script": "Thank you, and good morning. I'm Briyan Dyju, an independent researcher based in Dubai. Today's talk asks one simple question: how much of a person's own transaction history does an anomaly detector need before it is worth using?",
+      "transition": "Let me start with a customer on their first day.",
+      "id": 1
+    },
+    {
+      "type": "bullets",
+      "title": "A new customer opens an account",
+      "time": 75,
+      "bullets": [
+        "Personal detector: compare with your own past",
+        "Day one: your past is empty",
+        "900 units: normal for one, wild for another",
+        "One population rule serves people badly"
+      ],
+      "say": "A personalised detector compares each payment with your own past behaviour. That's powerful, because a 900-unit purchase can be ordinary for one person and extraordinary for another. But on day one, there is no past to compare with.",
+      "script": "Imagine you open a bank account today. A personalised anomaly detector would compare each of your payments with your own past behaviour. That is a powerful idea: a 900-unit purchase is unremarkable for one account holder and extraordinary for another, and a single population-wide rule serves both of them badly. But the approach has an obvious dependency. The personal model has to be estimated from your own transactions, and when your account opens, there are none.",
+      "transition": "So when does the personal baseline start to work?",
+      "id": 2
+    },
+    {
+      "type": "bullets",
+      "title": "Where does the baseline start to work?",
+      "time": 45,
+      "bullets": [
+        "Deployed systems filter “unseasoned users”",
+        "The cutoff is assumed, not measured",
+        "We found no published measurement"
+      ],
+      "highlight": "How many transactions are enough?",
+      "say": "Production systems handle this with a cutoff. One patent family literally filters out 'unseasoned users'. But we could not find any published measurement of where that cutoff should be, so that is what I measured.",
+      "script": "Production systems deal with this using a cutoff. One patent family describes filtering out what it calls unseasoned users, meaning users with insufficient history. The cutoff is treated as a known engineering parameter. Yet in a documented search, we found no published measurement of where it lies, or even whether it exists. So the question for this talk is: how many personal transactions are enough?",
+      "transition": "Here is how I measured it.",
+      "id": 3
+    },
+    {
+      "type": "bullets",
+      "title": "Measure it with one fixed test window",
+      "time": 75,
+      "pause": true,
+      "bullets": [
+        "Fixed window: the last 60 transactions",
+        "Train on the n just before it",
+        "n from 1 to 250, always paired",
+        "Anomaly: a stranger's real transaction swapped in",
+        "No detector's score defines the labels"
+      ],
+      "say": "For every account I hold the last sixty transactions fixed as a test window, and train on the n transactions just before it. To label anomalies without circularity, I swap in a real transaction from a different account, so provenance defines the label, not any detector.",
+      "script": "The design is simple. For every account, I hold the last sixty transactions fixed as the test window, and I train on the n transactions immediately before that window, with n running from one up to two hundred and fifty. Because the window never changes, every comparison across n is paired within the account. For ground truth, I avoid a trap: if you label anomalies with a statistical rule and then evaluate detectors that compute something similar, you only measure agreement between two versions of one rule. So I replace a held-out transaction with a real transaction from a different account. Provenance defines the label, and no detector's score does.",
+      "transition": "Here is what I ran this on.",
+      "id": 4
+    },
+    {
+      "type": "bullets",
+      "title": "Three data layers, six detectors",
+      "time": 45,
+      "bullets": [
+        "Berka: 300 real bank accounts",
+        "Simulation: 240 people, variability set",
+        "TabFormer: 300 entities, synthetic",
+        "Mahalanobis, k-NN, forest, autoencoder, z-scores"
+      ],
+      "say": "Three layers: real bank accounts from the Berka dataset, a controlled simulation where I set how variable people are, and a second, synthetic card dataset. Six standard unsupervised detectors run on each layer.",
+      "script": "There are three data layers. The main one is Berka: real, anonymised retail banking from a Czech bank, with three hundred accounts evaluated. Because real data cannot give me controlled variability, I also simulate two hundred and forty people whose behaviour I set directly. And to test whether the shape is specific to one old dataset, I use IBM's TabFormer card data, which is synthetic and never pooled with the real results. Six standard unsupervised detectors run on each layer: Mahalanobis distance, k-nearest-neighbour distance, isolation forest, a small autoencoder, and two z-scores.",
+      "transition": "Now the headline result.",
+      "id": 5
+    },
+    {
+      "type": "fig",
+      "title": "25 transactions reach 90% of best",
+      "time": 90,
+      "fig": "fig_berka_curves",
+      "bullets": [
+        "Mahalanobis PR-AUC **0.657**",
+        "98% of the gain by n = 50",
+        "Both z-scores never learn"
+      ],
+      "say": "This is the data-efficiency curve on real bank accounts. The shrinkage Mahalanobis detector reaches ninety percent of its best precision-recall AUC, 0.657, at just twenty-five personal transactions, and has gained almost everything by fifty. The two simple z-scores never learn at all.",
+      "script": "This is the main result, on real bank accounts. The horizontal axis is how many personal transactions the detector has, on a log scale, and the vertical axis is precision-recall AUC, where the dotted line is the 0.10 prevalence baseline. The Mahalanobis detector rises steeply and reaches ninety percent of its best value, 0.657, at twenty-five transactions. By fifty, ninety-eight percent of its total gain has arrived. The k-NN detector jumps later, between twenty-five and fifty, isolation forest is still climbing at two hundred and fifty, and the two univariate z-scores never learn anything.",
+      "transition": "But that single number depends on how you define sufficiency.",
+      "id": 6
+    },
+    {
+      "type": "table",
+      "title": "The threshold depends on the definition",
+      "time": 45,
+      "table": {
+        "header": [
+          "Detector",
+          "Rel-90",
+          "Rel-95"
+        ],
+        "rows": [
+          [
+            "Mahalanobis",
+            "25",
+            "25"
+          ],
+          [
+            "Autoencoder",
+            "25",
+            "25"
+          ],
+          [
+            "k-NN",
+            "100",
+            "250"
+          ],
+          [
+            "Isolation forest",
+            "250",
+            "250"
+          ]
+        ]
+      },
+      "bullets": [
+        "Same 25 at all **5** cohort seeds",
+        "Stability: never met by a learner"
+      ],
+      "say": "Rel-90 is the smallest n that reaches ninety percent of the best value; Rel-95 uses ninety-five. For Mahalanobis it is twenty-five either way, and it is identical across five independent cohort draws. But the stability criterion, spread across people, is never met by any detector that actually learns.",
+      "script": "I define sufficiency in three ways and report all of them. The relative-90 threshold is the smallest n that reaches ninety percent of the best observed value and never falls back. For Mahalanobis and the autoencoder that is twenty-five; for k-NN it is a hundred; for isolation forest it is still two hundred and fifty. The twenty-five for Mahalanobis is identical across five independent draws of the account cohort, so it is not an accident of one sample. The third definition, stability across people, is never met by any detector that learns, which tells us the average curve hides large individual variation that does not shrink with more data.",
+      "transition": "Now a question that matters in practice: should you personalise at all when history is thin?",
+      "id": 7
+    },
+    {
+      "type": "fig",
+      "title": "Below n = 10, trust the crowd",
+      "time": 90,
+      "fig": "fig_arms",
+      "bullets": [
+        "Population model: 400 other accounts",
+        "Personal worse until n = 10",
+        "k-NN: worse until n = 50"
+      ],
+      "say": "The green line is a model built only from four hundred other accounts. Below about ten transactions, that crowd model beats the person's own history. So personalisation is not a safe default in the sparse regime.",
+      "script": "Here the green dashed line is a population model, built from four hundred other accounts and using none of this person's data. The blue line is the personal model. For Mahalanobis, the personal model is actually worse than the crowd until about ten transactions, and the effect sizes are large. For k-NN the crossover is later, at fifty. In every one of the five cohort draws, the Mahalanobis crossover falls at exactly n equals ten. The common assumption that personalisation is a safe default is wrong in the sparse regime.",
+      "transition": "The orange line shows a fix.",
+      "id": 8
+    },
+    {
+      "type": "eq",
+      "title": "Shrink toward the crowd",
+      "time": 45,
+      "eq": "\\mu_h=\\frac{n\\,\\mu_p+\\kappa\\,\\mu_g}{n+\\kappa}",
+      "eq_txt": "μ_h = (n · μ_p + κ · μ_g) / (n + κ)",
+      "pause": true,
+      "bullets": [
+        "κ = 25, fixed in advance",
+        "n = 0: exactly the global model",
+        "Never meaningfully worse than either parent",
+        "Fails if signal lives in the features"
+      ],
+      "say": "The hybrid shrinks the personal estimate toward the population estimate with a weight set only by n. At zero history it is exactly the crowd model, and as n grows it converges to the personal one. In my simulation it fails when the personal signal lives in the features themselves, so it is not a universal cure.",
+      "script": "The fix is a shrinkage hybrid. The personal mean and scatter are pulled toward the population estimates with a weight determined only by the history size n, and a strength kappa that I fixed at twenty-five in advance, never tuning it on test data. At n equals zero this is exactly the global model, and as n grows it converges to the personal model. On the real data it is never meaningfully worse than either parent. One honest caveat: in my simulation, where the strongest features are personal novelty indicators computed against your own history, the hybrid computes them against the population and destroys the signal. So it helps when the personal signal lives in the parameters, not when it lives in the features.",
+      "transition": "Now the part that surprised me most: the alert threshold.",
+      "id": 9
+    },
+    {
+      "type": "table",
+      "title": "How you set the alert threshold matters",
+      "time": 90,
+      "pause": true,
+      "table": {
+        "header": [
+          "n",
+          "In-sample flag rate",
+          "LOO flag rate",
+          "LOO FPR"
+        ],
+        "rows": [
+          [
+            "5",
+            "0.989",
+            "0.152",
+            "0.151"
+          ],
+          [
+            "10",
+            "0.960",
+            "0.012",
+            "0.007"
+          ],
+          [
+            "25",
+            "0.391",
+            "0.110",
+            "0.066"
+          ],
+          [
+            "50",
+            "0.251",
+            "0.126",
+            "0.073"
+          ]
+        ]
+      },
+      "bullets": [
+        "n = 10: **96%** flagged in-sample",
+        "Leave-one-out: **1.2%** flagged",
+        "FPR 0.066 at n = 25 (nominal 0.05)"
+      ],
+      "say": "A detector needs an alert threshold. If you set it from the model's own training scores, at ten transactions it flags ninety-six percent of everything. With leave-one-out calibration, the same model flags one point two percent. That is an artefact of in-sample scoring, not of data scarcity.",
+      "script": "Ranking quality is not the same as a usable alert. A deployed detector needs a threshold, and the obvious choice is the ninety-fifth percentile of the scores the model gives its own training data. At ten transactions, that makes the Mahalanobis detector flag ninety-six percent of all transactions, even though its PR-AUC is more than four times the baseline. The reason is that in-sample scores are biased low by construction: a model scores the very points it was fitted to. If you instead score each training point with a model fitted on the others, leave-one-out, the same detector flags only one point two percent at ten transactions, and from twenty-five its false-positive rate is 0.066 against a nominal 0.05. So the answer to how much history is enough depends on how you calibrate, and the effect holds across six detectors and five seeds, though not always in the same direction.",
+      "transition": "Does any of this hold on a different dataset?",
+      "id": 10
+    },
+    {
+      "type": "fig",
+      "title": "A second dataset reverses a ranking",
+      "time": 75,
+      "fig": "fig_tabformer_curves",
+      "bullets": [
+        "Same shape, later threshold (250)",
+        "Isolation forest best at small n",
+        "Worst detector on Berka"
+      ],
+      "say": "On the synthetic card dataset the curve has the same shape, but the threshold moves to two hundred and fifty. And isolation forest, the worst detector on Berka, is the best one at small n here. So which model wins under scarcity depends on the dataset.",
+      "script": "On the TabFormer card data, which is synthetic, the qualitative shape replicates: Mahalanobis rises steeply and reaches the highest ceiling, and the z-scores stay flat. The relative-90 threshold, however, is two hundred and fifty rather than twenty-five. And one result does not replicate. Isolation forest was the worst detector at every size on Berka, but here it is the best at n equals five through fifty. I report that divergence plainly: the claim that sophisticated models are worse under scarcity is dataset-dependent, not universal.",
+      "transition": "What makes some people need more history than others?",
+      "id": 11
+    },
+    {
+      "type": "fig",
+      "title": "Variability sets how fast it learns",
+      "time": 60,
+      "fig": "fig_sim_archetypes",
+      "bullets": [
+        "Regular: 50 transactions; variable: 500",
+        "Simulation: Spearman ρ = 0.48 to 0.71",
+        "Real accounts: no descriptor predicts it"
+      ],
+      "say": "In the simulation, where I control variability, regular people need about fifty transactions and highly variable people about five hundred. But in the real Berka accounts, none of the eight descriptors I tested predicts an account's requirement. The simulation shows the effect can exist, not that it does in real data.",
+      "script": "In the simulation I set variability directly, and it matters a great deal: a regular person saturates around fifty transactions, while a traveller or a highly variable person needs about five hundred. Variability changes the rate of learning far more than the ceiling. But on real Berka accounts, none of eight variability descriptors predicts an account's data requirement after correction. The simulation shows the effect exists when the generating parameters are what theory says; it is not evidence that it exists in real data.",
+      "transition": "One more practical finding about which history to keep.",
+      "id": 12
+    },
+    {
+      "type": "bullets",
+      "title": "Recent history beats more history",
+      "time": 45,
+      "bullets": [
+        "50 to 250 transactions: 0.647 → 0.642",
+        "Same 50 from 4× span: −0.036",
+        "Drift is real, but doesn't predict loss",
+        "ρ = −0.08, Holm p = 0.32"
+      ],
+      "say": "Going from fifty to two hundred and fifty transactions changes almost nothing, while drawing the same fifty from a four-times-longer span costs a little. I tested the obvious drift explanation directly, and it does not explain which accounts lose.",
+      "script": "Does it help to keep more history? Going from fifty to two hundred and fifty transactions at natural density changes PR-AUC from 0.647 to 0.642, essentially nothing. Drawing the same fifty transactions from a span four times longer costs 0.036. The tempting explanation is behavioural drift, so I measured drift directly. It is real: older behaviour does look different from recent behaviour. But an account's drift does not predict how much that account loses, with a correlation of minus 0.08. The mechanism remains open. A practical bonus is that shorter retention seems to cost nothing here.",
+      "transition": "Before I wrap up, what this study cannot tell you.",
+      "id": 13
+    },
+    {
+      "type": "bullets",
+      "title": "Limits and ethics",
+      "time": 45,
+      "bullets": [
+        "One bank, 1993 to 1998; second dataset synthetic",
+        "10% injection far above fraud prevalence",
+        "A flag is a deviation, not fraud",
+        "Audit is district-level only"
+      ],
+      "say": "This is one bank in the nineties, plus a synthetic dataset, and my injected anomalies are far more common than real fraud. A flagged transaction is a deviation, not evidence of fraud. My fairness audit found no district-level gap, but it cannot test age, tenure or immigration status.",
+      "script": "The limits are real. The real evidence is one bank, from 1993 to 1998. The second dataset is synthetic. My injected anomalies are ten percent of transactions, far above realistic fraud prevalence, and I do not model an adversary imitating the account holder. Ethically, the transactions a detector flags are by construction different from a person's past, which in real life means holidays, house moves and new jobs. A flag is a deviation, not fraud. My district-level audit found no significant concentration of false positives by salary, unemployment or region, but with three hundred accounts it cannot exclude weak effects, and it cannot test age, tenure or immigration status.",
+      "transition": "So what should you take away?",
+      "id": 14
+    },
+    {
+      "type": "bullets",
+      "title": "Takeaways",
+      "time": 45,
+      "bullets": [
+        "Baseline ranks well from about 25 transactions",
+        "Hybrid removes the cold-start penalty",
+        "Calibration moves the operating point",
+        "Keep recent history, not all history"
+      ],
+      "say": "To summarise: a personal baseline ranks well from about twenty-five transactions; a shrinkage hybrid removes the cold-start penalty; how you calibrate the alert threshold changes the operating point; and recent history is enough.",
+      "script": "To summarise. A personal baseline ranks well from about twenty-five transactions on the best real-data detector, and that number is stable across cohorts. A hybrid that shrinks toward the crowd while history is thin removes the cold-start penalty without costing anything later. How you calibrate the alert threshold changes the operating point dramatically, so a single number of transactions is never the whole answer. And recent history is enough. The practical recommendation is not a number: use a hybrid, keep recent history, and do not assume that a detector that ranks well can be deployed.",
+      "transition": "I'm happy to take questions.",
+      "id": 15
+    },
+    {
+      "type": "qr",
+      "title": "Questions?",
+      "time": 15,
+      "bullets": [
+        "briyan.xyz/research",
+        "briyandyju@gmail.com"
+      ],
+      "say": "Thank you. The paper is linked at the QR code and I'm happy to take questions.",
+      "script": "Thank you. The paper is linked from the QR code on screen, at briyan dot xyz slash research, and my email is on the slide. I'm happy to take questions.",
+      "transition": "",
+      "id": 16
+    }
+  ]
+}

@@ -1,0 +1,20 @@
+{
+  "phase": 8,
+  "venue": null,
+  "palette": "poster pair: slate blue 2D5F8B + gold C9A24A on white",
+  "talk_type": "oral",
+  "talk_minutes": 15,
+  "slide_count": 16,
+  "aspect": "16:9",
+  "speaker_notes": true,
+  "engine": "pdflatex",
+  "build": "pdflatex + pdflatex (latexmk unusable: no Perl)",
+  "codex_thread_id": null,
+  "review": "REVIEW_UNAVAILABLE (self-check recorded in SLIDES_REVIEW.md)",
+  "status": "completed",
+  "awaiting": null,
+  "timestamp": "2026-10-24",
+  "qr_target": "https://briyan.xyz/research (HTTP 200 checked)",
+  "pdf_pages": 25,
+  "frames": 16
+}
