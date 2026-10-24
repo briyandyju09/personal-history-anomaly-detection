@@ -1,5 +1,7 @@
 # How Much Personal History Is Enough?
 
+![How Much Personal History Is Enough? A pixel-art scene: one account with a stack of transactions, the Berka PR-AUC curve showing the personal model, the shrinkage hybrid and the global model, and 400 donor accounts](docs/hero.svg)
+
 Measuring the data requirement for individualised financial behavioural anomaly detection.
 
 **Status: first-draft research project, independently re-verified and extended.** Every number in `PAPER.md` was produced by the code here. A second session independently re-executed the entire pipeline from a clean environment before adding anything new — see `docs/VERIFICATION.md` for the number-by-number comparison (bit-exact match). Anything not executed is listed as not yet evaluated in Appendix A.5 rather than estimated.
